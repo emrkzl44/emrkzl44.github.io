@@ -1,5 +1,5 @@
 ---
-layout: home
+title: "Welcome!"
 ---
 
-Welcome to my site!
+Hi, I'm Emre. This is my personal site for my English course.
