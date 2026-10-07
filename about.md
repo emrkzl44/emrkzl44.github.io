@@ -4,4 +4,4 @@ title: About me
 permalink: /about/
 ---
 
-Buraya kendi 2-3 İngilizce cümleni yaz.
+Hello, I am Emre Kuzal. I am a third-year Computer Engineering student.
