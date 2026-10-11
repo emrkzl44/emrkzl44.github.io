@@ -1,5 +1,6 @@
 ---
-title: About me
+title: "About me"
+excerpt: "Get to know me"
 permalink: /about/
 ---
 
