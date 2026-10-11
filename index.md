@@ -16,7 +16,7 @@ feature_row:
     btn_label: "Read more"
     btn_class: "btn--primary"
   - title: "Presentation"
-    excerpt: "Context Switching: The Hidden Cost of Multitasking"
+    excerpt: "How One CPU Runs Many Programs: Context Switching"
     url: "/context-switching/"
     btn_label: "Open"
     btn_class: "btn--primary"
