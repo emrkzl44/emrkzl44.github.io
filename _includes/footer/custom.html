@@ -1,21 +1,133 @@
-{% if page.typed %}
+{% if page.layout == "splash" %}
+<div class="social-rail">
+  {% for link in site.author.links %}
+  <a href="{{ link.url }}" aria-label="{{ link.label }}" title="{{ link.label }}"{% unless link.url contains "mailto:" %} target="_blank" rel="noopener"{% endunless %}><i class="{{ link.icon }}"></i></a>
+  {% endfor %}
+  <span class="social-rail__line"></span>
+</div>
+
 <script>
-  (function () {
-    var words = {{ page.typed | jsonify }};
-    var lead = document.querySelector(".page__hero--overlay .page__lead");
-    if (!lead || !words.length) return;
-    lead.innerHTML = '<span class="typed-text"></span><span class="typed-cursor">|</span>';
-    var span = lead.querySelector(".typed-text");
-    var w = 0, c = 0, deleting = false;
-    function tick() {
-      var word = words[w];
-      span.textContent = word.slice(0, c);
-      if (!deleting && c < word.length) { c++; setTimeout(tick, 70); }
-      else if (!deleting) { deleting = true; setTimeout(tick, 1600); }
-      else if (c > 0) { c--; setTimeout(tick, 35); }
-      else { deleting = false; w = (w + 1) % words.length; setTimeout(tick, 300); }
+(function () {
+  var rail = document.querySelector(".social-rail");
+  if (rail) document.body.appendChild(rail);
+
+  var hero = document.querySelector(".page__hero--overlay");
+  if (!hero) return;
+
+  /* Scroll-down arrow */
+  var hint = document.createElement("a");
+  hint.className = "scroll-hint";
+  hint.href = "#main";
+  hint.setAttribute("aria-label", "Scroll down");
+  hint.innerHTML = '<i class="fas fa-chevron-down"></i>';
+  hero.appendChild(hint);
+
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  /* Cards: reveal on scroll */
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll(".feature__item").forEach(function (el) {
+      el.classList.add("reveal");
+      io.observe(el);
+    });
+  }
+
+  /* Hero: interactive particle network */
+  var canvas = document.createElement("canvas");
+  canvas.className = "hero-canvas";
+  hero.insertBefore(canvas, hero.firstChild);
+  var ctx = canvas.getContext("2d");
+  var particles = [];
+  var mouse = { x: null, y: null };
+  var w = 0, h = 0;
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    w = hero.offsetWidth;
+    h = hero.offsetHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var count = Math.min(90, Math.floor((w * h) / 14000));
+    particles = [];
+    for (var i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6,
+        r: Math.random() * 1.8 + 0.8
+      });
     }
-    tick();
-  })();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(196, 181, 253, 0.9)";
+      ctx.fill();
+
+      for (var j = i + 1; j < particles.length; j++) {
+        var q = particles[j];
+        var dx = p.x - q.x, dy = p.y - q.y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 130) {
+          ctx.strokeStyle = "rgba(103, 232, 249, " + (1 - d / 130) * 0.35 + ")";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.stroke();
+        }
+      }
+
+      if (mouse.x !== null) {
+        var mx = p.x - mouse.x, my = p.y - mouse.y;
+        var md = Math.sqrt(mx * mx + my * my);
+        if (md < 180) {
+          ctx.strokeStyle = "rgba(167, 139, 250, " + (1 - md / 180) * 0.7 + ")";
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  hero.addEventListener("mousemove", function (e) {
+    var rect = hero.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+  });
+  hero.addEventListener("mouseleave", function () {
+    mouse.x = null;
+    mouse.y = null;
+  });
+  window.addEventListener("resize", resize);
+  window.addEventListener("load", resize);
+
+  resize();
+  draw();
+})();
 </script>
 {% endif %}
