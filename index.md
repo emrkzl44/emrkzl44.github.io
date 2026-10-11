@@ -21,7 +21,10 @@ feature_row:
     btn_label: "Open"
     btn_class: "btn--primary"
   - title: '<i class="fas fa-pen-nib"></i> Blog'
-    excerpt: "Coming soon."
+    excerpt: "Notes and thoughts from my journey."
+    url: "/blog/"
+    btn_label: "Visit"
+    btn_class: "btn--primary"
 ---
 
 {% include feature_row %}
