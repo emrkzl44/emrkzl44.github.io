@@ -1,0 +1,24 @@
+---
+title: "Blog"
+excerpt: "Notes and thoughts from my journey"
+permalink: /blog/
+---
+
+{% if site.posts.size > 0 %}
+<div class="post-list">
+  {% for post in site.posts %}
+  <a class="post-card" href="{{ post.url | relative_url }}">
+    <span class="post-card__date"><i class="far fa-calendar-alt"></i> {{ post.date | date: "%B %-d, %Y" }}</span>
+    <h3 class="post-card__title">{{ post.title }}</h3>
+    <p class="post-card__excerpt">{{ post.excerpt | strip_html | truncate: 160 }}</p>
+    <span class="post-card__more">Read more <i class="fas fa-arrow-right"></i></span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-state__icon"><i class="fas fa-pen-nib"></i></div>
+  <h3>First post coming soon</h3>
+  <p>Stay tuned!</p>
+</div>
+{% endif %}
