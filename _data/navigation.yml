@@ -3,3 +3,5 @@ main:
     url: /about/
   - title: "Presentation"
     url: /context-switching/
+  - title: "Blog"
+    url: /blog/
