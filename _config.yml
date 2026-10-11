@@ -6,7 +6,7 @@ plugins:
 minimal_mistakes_skin: "dark"
 
 title: "Emre"
-description: "Computer Engineering student"
+description: "Computer Engineering Student"
 url: "https://emrkzl44.github.io"
 
 author:
@@ -17,6 +17,9 @@ author:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/emrkzl44"
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope"
+      url: "mailto:emre33kuzal@gmail.com"
 
 defaults:
   - scope:
