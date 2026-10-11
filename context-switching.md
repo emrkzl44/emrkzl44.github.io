@@ -1,5 +1,5 @@
 ---
-title: "Context Switching: The Hidden Cost of Multitasking"
+title: "How One CPU Runs Many Programs: Context Switching"
 permalink: /context-switching/
 ---
 
