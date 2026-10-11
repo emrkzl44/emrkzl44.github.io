@@ -1,0 +1,21 @@
+{% if page.typed %}
+<script>
+  (function () {
+    var words = {{ page.typed | jsonify }};
+    var lead = document.querySelector(".page__hero--overlay .page__lead");
+    if (!lead || !words.length) return;
+    lead.innerHTML = '<span class="typed-text"></span><span class="typed-cursor">|</span>';
+    var span = lead.querySelector(".typed-text");
+    var w = 0, c = 0, deleting = false;
+    function tick() {
+      var word = words[w];
+      span.textContent = word.slice(0, c);
+      if (!deleting && c < word.length) { c++; setTimeout(tick, 70); }
+      else if (!deleting) { deleting = true; setTimeout(tick, 1600); }
+      else if (c > 0) { c--; setTimeout(tick, 35); }
+      else { deleting = false; w = (w + 1) % words.length; setTimeout(tick, 300); }
+    }
+    tick();
+  })();
+</script>
+{% endif %}
