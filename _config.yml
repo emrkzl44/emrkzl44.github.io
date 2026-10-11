@@ -6,11 +6,12 @@ plugins:
 minimal_mistakes_skin: "dark"
 
 title: "Emre"
-description: "Computer Engineering Student"
+description: "Computer Engineering student"
 url: "https://emrkzl44.github.io"
 
 author:
   name: "Emre"
+  avatar: "/assets/images/avatar.svg"
   bio: "Computer Engineering student"
   location: "Turkey"
   links:
@@ -28,3 +29,17 @@ defaults:
     values:
       layout: single
       author_profile: true
+      classes: wide
+      header:
+        overlay_color: "#070b1a"
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      classes: wide
+      show_date: true
+      header:
+        overlay_color: "#070b1a"
+        show_overlay_excerpt: false
