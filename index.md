@@ -1,7 +1,7 @@
 ---
 layout: splash
 title: "Hi, I'm Emre"
-excerpt: "Computer Engineering student"
+excerpt: "Computer Engineering Student"
 header:
   overlay_color: "#0f172a"
   actions:
