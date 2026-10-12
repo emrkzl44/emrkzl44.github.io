@@ -6,7 +6,6 @@
   <span class="social-rail__line"></span>
 </div>
 {% endif %}
-<div class="scroll-progress"></div>
 <div class="cursor-glow"></div>
 
 <script>
@@ -16,7 +15,7 @@
   var fine = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
 
   /* Fixed elements live directly in <body> */
-  [".social-rail", ".scroll-progress", ".cursor-glow"].forEach(function (sel) {
+  [".social-rail", ".cursor-glow"].forEach(function (sel) {
     var el = document.querySelector(sel);
     if (el) body.appendChild(el);
   });
@@ -28,16 +27,44 @@
     if (p && here.indexOf(p) === 0) a.classList.add("is-active");
   });
 
-  /* Scroll: progress bar, navbar glass, hero parallax */
+  /* Navbar: sliding highlight pill */
+  var nav = document.querySelector(".greedy-nav");
+  if (nav) {
+    var ind = document.createElement("span");
+    ind.className = "nav-indicator";
+    nav.appendChild(ind);
+    var activeLink = function () {
+      return nav.querySelector(".visible-links a.is-active");
+    };
+    var moveTo = function (a) {
+      if (!a || !a.closest(".visible-links")) {
+        ind.style.opacity = "0";
+        return;
+      }
+      var n = nav.getBoundingClientRect();
+      var r = a.getBoundingClientRect();
+      ind.style.width = r.width + "px";
+      ind.style.height = r.height + "px";
+      ind.style.transform = "translate(" + (r.left - n.left) + "px, " + (r.top - n.top) + "px)";
+      ind.style.opacity = "1";
+    };
+    nav.addEventListener("mouseover", function (e) {
+      var a = e.target.closest ? e.target.closest(".visible-links a") : null;
+      if (a) moveTo(a);
+    });
+    nav.addEventListener("mouseleave", function () { moveTo(activeLink()); });
+    window.addEventListener("resize", function () { moveTo(activeLink()); });
+    window.addEventListener("load", function () { moveTo(activeLink()); });
+    setTimeout(function () { moveTo(activeLink()); }, 900);
+  }
+
+  /* Scroll: floating navbar + hero parallax */
   var masthead = document.querySelector(".masthead");
-  var bar = document.querySelector(".scroll-progress");
   var heroWrap = document.querySelector(".page__hero--overlay .wrapper");
   var ticking = false;
   function onScroll() {
     var y = window.pageYOffset;
-    var max = document.documentElement.scrollHeight - window.innerHeight;
     if (masthead) masthead.classList.toggle("is-scrolled", y > 10);
-    if (bar) bar.style.transform = "scaleX(" + (max > 0 ? y / max : 0) + ")";
     if (heroWrap && !reduce) {
       heroWrap.style.transform = "translateY(" + y * 0.3 + "px)";
       heroWrap.style.opacity = Math.max(0, 1 - y / 500);
@@ -65,6 +92,47 @@
 
   if (reduce) return;
 
+  /* Typewriter: subtitle pill (+ hero buttons on home) */
+  function prepTyping(el) {
+    var text = el.textContent.trim();
+    if (!text) return null;
+    el.innerHTML = '<span class="tw"><span class="tw-ghost"></span><span class="tw-live"></span></span>';
+    el.querySelector(".tw-ghost").textContent = text;
+    return { el: el, text: text, live: el.querySelector(".tw-live") };
+  }
+  function typeOne(item, done) {
+    var i = 0;
+    item.el.classList.add("tw-typing");
+    (function step() {
+      i++;
+      item.live.textContent = item.text.slice(0, i);
+      if (i < item.text.length) {
+        setTimeout(step, 45 + Math.random() * 55);
+      } else {
+        item.el.classList.remove("tw-typing");
+        done();
+      }
+    })();
+  }
+  var queue = [];
+  var lead = document.querySelector(".page__hero--overlay .page__lead");
+  if (lead) queue.push(prepTyping(lead));
+  if (body.classList.contains("layout--splash")) {
+    document.querySelectorAll(".page__hero--overlay .btn").forEach(function (b) {
+      queue.push(prepTyping(b));
+    });
+  }
+  queue = queue.filter(Boolean);
+  var qi = 0;
+  function nextTyping() {
+    if (qi < queue.length) {
+      typeOne(queue[qi++], function () { setTimeout(nextTyping, 180); });
+    } else if (queue.length) {
+      queue[0].el.classList.add("tw-typing");
+    }
+  }
+  setTimeout(nextTyping, 800);
+
   /* Smooth fade between pages */
   document.addEventListener("click", function (e) {
     var a = e.target.closest ? e.target.closest("a") : null;
@@ -87,7 +155,7 @@
         }
       });
     }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
-    document.querySelectorAll(".feature__item, .post-card, .sidebar, .page__inner-wrap, .empty-state").forEach(function (el) {
+    document.querySelectorAll(".feature__item, .post-card, .sidebar, .page__inner-wrap, .layout--single .page__content > *").forEach(function (el) {
       var i = Array.prototype.indexOf.call(el.parentNode.children, el);
       el.style.setProperty("--d", Math.min(i, 4) * 0.12 + "s");
       el.classList.add("reveal");
