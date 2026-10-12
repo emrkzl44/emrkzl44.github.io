@@ -19,7 +19,6 @@
   var fine = mq("(pointer: fine)");
   var supportsVT = "CSSViewTransitionRule" in window;
   var isHome = body.classList.contains("layout--splash");
-  var is404 = body.classList.contains("page-404");
 
   /* Fixed elements live directly in <body> */
   [".social-rail", ".cursor-glow", ".vt-curtain", ".grain"].forEach(function (sel) {
@@ -164,12 +163,6 @@
     var titleText = title.textContent.replace(/\s+/g, " ").trim();
     title.setAttribute("data-text", titleText);
 
-    if (is404) {
-      setInterval(function () {
-        title.classList.add("is-hover");
-        setTimeout(function () { title.classList.remove("is-hover"); }, 1400);
-      }, 3500);
-    }
 
     if (titleText) {
       var chars = [];
