@@ -92,7 +92,7 @@
 
   if (reduce) return;
 
-  /* Typewriter: subtitle pill (+ hero buttons on home) */
+  /* Typewriter */
   function prepTyping(el) {
     var text = el.textContent.trim();
     if (!text) return null;
@@ -100,38 +100,45 @@
     el.querySelector(".tw-ghost").textContent = text;
     return { el: el, text: text, live: el.querySelector(".tw-live") };
   }
-  function typeOne(item, done) {
+  function typeOne(item, opts) {
     var i = 0;
-    item.el.classList.add("tw-typing");
+    if (opts.caret) item.el.classList.add("tw-typing");
     (function step() {
       i++;
       item.live.textContent = item.text.slice(0, i);
       if (i < item.text.length) {
-        setTimeout(step, 45 + Math.random() * 55);
+        setTimeout(step, opts.min + Math.random() * opts.range);
       } else {
         item.el.classList.remove("tw-typing");
-        done();
       }
     })();
   }
-  var queue = [];
   var lead = document.querySelector(".page__hero--overlay .page__lead");
-  if (lead) queue.push(prepTyping(lead));
   if (body.classList.contains("layout--splash")) {
-    document.querySelectorAll(".page__hero--overlay .btn").forEach(function (b) {
-      queue.push(prepTyping(b));
+    /* Home: fast, subtitle and buttons type together */
+    var leadItem = lead ? prepTyping(lead) : null;
+    if (leadItem) {
+      setTimeout(function () {
+        typeOne(leadItem, { min: 22, range: 22, caret: true });
+      }, 450);
+    }
+    document.querySelectorAll(".page__hero--overlay .btn").forEach(function (b, k) {
+      var btnItem = prepTyping(b);
+      if (btnItem) {
+        setTimeout(function () {
+          typeOne(btnItem, { min: 30, range: 25, caret: false });
+        }, 600 + k * 150);
+      }
     });
-  }
-  queue = queue.filter(Boolean);
-  var qi = 0;
-  function nextTyping() {
-    if (qi < queue.length) {
-      typeOne(queue[qi++], function () { setTimeout(nextTyping, 180); });
-    } else if (queue.length) {
-      queue[0].el.classList.add("tw-typing");
+  } else if (lead) {
+    /* Other pages: single subtitle, normal speed */
+    var pageItem = prepTyping(lead);
+    if (pageItem) {
+      setTimeout(function () {
+        typeOne(pageItem, { min: 45, range: 55, caret: true });
+      }, 800);
     }
   }
-  setTimeout(nextTyping, 800);
 
   /* Smooth fade between pages */
   document.addEventListener("click", function (e) {
