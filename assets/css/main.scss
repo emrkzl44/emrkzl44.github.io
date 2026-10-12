@@ -60,7 +60,7 @@ body.is-leaving { opacity: 0; }
 .greedy-nav {
   position: relative;
   min-height: 3.4em;
-  padding: 0 0.5em 0 0.9em;
+  padding: 0 0.5em 0 1.4em;
   border-radius: 999px;
   background: rgba(15, 21, 48, 0.55);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -92,7 +92,7 @@ body.is-leaving { opacity: 0; }
   animation: borderFlow 8s linear infinite;
 }
 
-/* Logo: terminal badge + shimmering name */
+/* Logo: shimmering name */
 .greedy-nav .site-title {
   margin-right: 1em;
   white-space: nowrap;
@@ -105,25 +105,6 @@ body.is-leaving { opacity: 0; }
   -webkit-text-fill-color: transparent;
   animation: shimmer 6s linear infinite;
 }
-.greedy-nav .site-title::before {
-  content: ">_";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.1em;
-  height: 2.1em;
-  margin-right: 0.65em;
-  border-radius: 10px;
-  font-family: Consolas, Monaco, "Courier New", monospace;
-  font-size: 0.75em;
-  font-weight: 700;
-  color: #fff;
-  -webkit-text-fill-color: #fff;
-  background: linear-gradient(135deg, #7c3aed, #06b6d4);
-  box-shadow: 0 0 18px rgba(124, 58, 237, 0.6);
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.greedy-nav .site-title:hover::before { transform: rotate(-10deg) scale(1.12); }
 
 /* Links + sliding highlight */
 .greedy-nav .visible-links a {
@@ -320,6 +301,7 @@ body.is-leaving { opacity: 0; }
   width: 2px;
   height: 1.05em;
   margin-left: 3px;
+  margin-right: -5px;
   vertical-align: -0.15em;
   background: #67e8f9;
   box-shadow: 0 0 8px #67e8f9;
