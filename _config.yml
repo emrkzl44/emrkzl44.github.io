@@ -5,19 +5,22 @@ plugins:
 
 minimal_mistakes_skin: "dark"
 
-title: "Emre"
+title: "Emre Kuzal"
 description: "Computer Engineering student"
 url: "https://emrkzl44.github.io"
 
 author:
-  name: "Emre"
-  avatar: "/assets/images/avatar.svg"
+  name: "Emre Kuzal"
+  avatar: "/assets/images/computer.svg"
   bio: "Computer Engineering student"
-  location: "Turkey"
+  location: "Mersin, Türkiye"
   links:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/emrkzl44"
+    - label: "LinkedIn"
+      icon: "fab fa-fw fa-linkedin"
+      url: "https://www.linkedin.com/in/emre-kuzal-73b90932b"
     - label: "Email"
       icon: "fas fa-fw fa-envelope"
       url: "mailto:emre33kuzal@gmail.com"
