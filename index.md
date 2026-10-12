@@ -9,6 +9,8 @@ header:
       url: "/about/"
     - label: "My presentation"
       url: "/context-switching/"
+    - label: "Blog"
+      url: "/blog/"
 feature_row:
   - title: '<i class="fas fa-user-astronaut"></i> About me'
     excerpt: "Who I am and what I study."
