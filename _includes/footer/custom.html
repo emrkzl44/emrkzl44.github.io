@@ -7,27 +7,81 @@
 </div>
 {% endif %}
 <div class="cursor-glow"></div>
+<div class="vt-curtain" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-dot" aria-hidden="true"></div>
+<div class="cursor-ring" aria-hidden="true"></div>
 
 <script>
 (function () {
+  var html = document.documentElement;
   var body = document.body;
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var fine = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+  function mq(q) { return window.matchMedia ? window.matchMedia(q).matches : false; }
+  var reduce = mq("(prefers-reduced-motion: reduce)");
+  var fine = mq("(pointer: fine)");
+  var supportsVT = "CSSViewTransitionRule" in window;
+  var isHome = body.classList.contains("layout--splash");
+  var is404 = body.classList.contains("page-404");
 
   /* Fixed elements live directly in <body> */
-  [".social-rail", ".cursor-glow"].forEach(function (sel) {
+  [".social-rail", ".cursor-glow", ".vt-curtain", ".grain", ".cursor-dot", ".cursor-ring"].forEach(function (sel) {
     var el = document.querySelector(sel);
     if (el) body.appendChild(el);
   });
 
-  /* Mark the current page in the navbar */
+  /* ================= THEME (dark / light) ================= */
+  var themeHooks = [];
+  function getTheme() { return html.getAttribute("data-theme") === "light" ? "light" : "dark"; }
+  function setTheme(t) {
+    html.setAttribute("data-theme", t);
+    try { localStorage.setItem("theme", t); } catch (e) {}
+    themeHooks.forEach(function (fn) { fn(t); });
+  }
+  var mastWrap = document.querySelector(".masthead__inner-wrap");
+  if (mastWrap) {
+    var tbtn = document.createElement("button");
+    tbtn.type = "button";
+    tbtn.className = "theme-toggle";
+    tbtn.setAttribute("aria-label", "Toggle dark / light theme");
+    tbtn.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<mask id="tt-mask"><rect x="-12" y="-12" width="48" height="48" fill="#fff"/><circle class="tt-cut" cx="18" cy="6" r="7" fill="#000"/></mask>' +
+        '<circle class="tt-core" cx="12" cy="12" r="9" fill="currentColor" mask="url(#tt-mask)"/>' +
+        '<g class="tt-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+          '<line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/>' +
+          '<line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/>' +
+          '<line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/>' +
+          '<line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.4" y2="4.6"/>' +
+        '</g>' +
+      '</svg>';
+    mastWrap.appendChild(tbtn);
+    tbtn.addEventListener("click", function () {
+      var next = getTheme() === "dark" ? "light" : "dark";
+      if (!document.startViewTransition || reduce) {
+        setTheme(next);
+        return;
+      }
+      var r = tbtn.getBoundingClientRect();
+      var x = r.left + r.width / 2;
+      var y = r.top + r.height / 2;
+      var radius = Math.sqrt(Math.pow(Math.max(x, window.innerWidth - x), 2) + Math.pow(Math.max(y, window.innerHeight - y), 2));
+      html.style.setProperty("--tx", x + "px");
+      html.style.setProperty("--ty", y + "px");
+      html.style.setProperty("--tr", radius + "px");
+      html.classList.add("theme-vt");
+      var done = function () { html.classList.remove("theme-vt"); };
+      var vt = document.startViewTransition(function () { setTheme(next); });
+      vt.finished.then(done, done);
+    });
+  }
+
+  /* ================= NAVBAR ================= */
   var here = window.location.pathname.replace(/\/$/, "");
   document.querySelectorAll(".greedy-nav .visible-links a").forEach(function (a) {
     var p = a.pathname.replace(/\/$/, "");
     if (p && here.indexOf(p) === 0) a.classList.add("is-active");
   });
 
-  /* Navbar: sliding highlight pill */
   var nav = document.querySelector(".greedy-nav");
   if (nav) {
     var ind = document.createElement("span");
@@ -55,7 +109,8 @@
     nav.addEventListener("mouseleave", function () { moveTo(activeLink()); });
     window.addEventListener("resize", function () { moveTo(activeLink()); });
     window.addEventListener("load", function () { moveTo(activeLink()); });
-    setTimeout(function () { moveTo(activeLink()); }, 900);
+    setTimeout(function () { moveTo(activeLink()); }, 1300);
+    setTimeout(function () { moveTo(activeLink()); }, 2500);
   }
 
   /* Scroll: floating navbar + hero parallax */
@@ -79,9 +134,22 @@
   }, { passive: true });
   onScroll();
 
-  /* Home: scroll-down arrow */
+  /* ================= HERO EXTRAS ================= */
   var hero = document.querySelector(".page__hero--overlay");
-  if (hero && body.classList.contains("layout--splash")) {
+  var title = hero ? hero.querySelector(".page__title") : null;
+
+  if (hero) {
+    /* Animated wave divider */
+    var wave = document.createElement("div");
+    wave.className = "hero-wave";
+    wave.setAttribute("aria-hidden", "true");
+    wave.innerHTML =
+      '<svg viewBox="0 0 2400 100" preserveAspectRatio="none"><path class="hero-wave__back" d="M0,50 C200,10 400,10 600,50 C800,90 1000,90 1200,50 C1400,10 1600,10 1800,50 C2000,90 2200,90 2400,50 V100 H0 Z"/></svg>' +
+      '<svg viewBox="0 0 2400 100" preserveAspectRatio="none"><path class="hero-wave__front" d="M0,68 C200,95 400,95 600,68 C800,40 1000,40 1200,68 C1400,95 1600,95 1800,68 C2000,40 2200,40 2400,68 V100 H0 Z"/></svg>';
+    hero.appendChild(wave);
+  }
+
+  if (hero && isHome) {
     var hint = document.createElement("a");
     hint.className = "scroll-hint";
     hint.href = "#main";
@@ -90,9 +158,100 @@
     hero.appendChild(hint);
   }
 
+  /* ================= CONTEXT SWITCHING DEMO ================= */
+  document.querySelectorAll(".cs-demo").forEach(function (demo) {
+    var cap = demo.querySelector(".cs-caption");
+    var now = demo.querySelector(".cs-now");
+    var dots = demo.querySelectorAll(".cs-steps span");
+    var steps = [
+      { run: "a", pkt: "", irq: false, text: "Process A is running on the CPU." },
+      { run: "a", pkt: "", irq: true, text: "Timer interrupt! The OS takes control of the CPU." },
+      { run: "os", pkt: "cpu-a", irq: false, text: "The OS saves A's registers (PC, SP, ...) into PCB A." },
+      { run: "os", pkt: "b-cpu", irq: false, text: "The OS loads B's saved registers from PCB B." },
+      { run: "b", pkt: "", irq: false, text: "Process B continues exactly where it stopped." },
+      { run: "b", pkt: "", irq: true, text: "Another timer interrupt..." },
+      { run: "os", pkt: "cpu-b", irq: false, text: "B's registers are saved into PCB B." },
+      { run: "os", pkt: "a-cpu", irq: false, text: "A's registers are loaded back. A runs again!" }
+    ];
+    var i = 0;
+    function show() {
+      var s = steps[i];
+      demo.setAttribute("data-run", s.run);
+      demo.setAttribute("data-pkt", s.pkt);
+      demo.classList.toggle("is-irq", s.irq);
+      if (now) now.textContent = s.run === "os" ? "OS" : s.run.toUpperCase();
+      if (cap) {
+        cap.classList.remove("is-in");
+        void cap.offsetWidth;
+        cap.textContent = s.text;
+        cap.classList.add("is-in");
+      }
+      dots.forEach(function (d, k) { d.classList.toggle("is-on", k === i); });
+      i = (i + 1) % steps.length;
+    }
+    show();
+    setInterval(show, 2300);
+  });
+
+  /* Fallback page curtain: finish the reveal */
+  if (html.classList.contains("curtain-reveal")) {
+    setTimeout(function () { html.classList.remove("curtain-reveal"); }, 900);
+  }
+
   if (reduce) return;
 
-  /* Typewriter */
+  /* ================= TITLE: letter wave + glitch ================= */
+  if (title) {
+    var titleText = title.textContent.replace(/\s+/g, " ").trim();
+    title.setAttribute("data-text", titleText);
+
+    var glitch = function () {
+      if (title.classList.contains("is-glitching")) return;
+      title.classList.add("is-glitching");
+      setTimeout(function () { title.classList.remove("is-glitching"); }, 680);
+    };
+    title.addEventListener("mouseenter", glitch);
+    if (is404) {
+      setTimeout(glitch, 1200);
+      setInterval(glitch, 2600);
+    }
+
+    if (titleText) {
+      var chars = [];
+      title.textContent = "";
+      title.classList.add("is-split");
+      titleText.split(" ").forEach(function (word, wi, arr) {
+        var w = document.createElement("span");
+        w.className = "tt-word";
+        Array.from(word).forEach(function (ch) {
+          var c = document.createElement("span");
+          c.className = "tt-char";
+          c.textContent = ch;
+          c.style.animationDelay = (0.15 + chars.length * 0.035).toFixed(3) + "s";
+          w.appendChild(c);
+          chars.push(c);
+        });
+        title.appendChild(w);
+        if (wi < arr.length - 1) title.appendChild(document.createTextNode(" "));
+      });
+      var placeGradient = function () {
+        var W = title.offsetWidth;
+        chars.forEach(function (c) {
+          c.style.backgroundSize = W * 2 + "px 100%";
+          c.style.backgroundPosition = -c.offsetLeft + "px 0";
+        });
+      };
+      placeGradient();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeGradient);
+      setTimeout(function () {
+        title.textContent = titleText;
+        title.classList.remove("is-split");
+        title.classList.add("is-done");
+      }, (0.15 + chars.length * 0.035 + 1) * 1000);
+    }
+  }
+
+  /* ================= TYPEWRITER ================= */
   function prepTyping(el) {
     var text = el.textContent.trim();
     if (!text) return null;
@@ -114,8 +273,7 @@
     })();
   }
   var lead = document.querySelector(".page__hero--overlay .page__lead");
-  if (body.classList.contains("layout--splash")) {
-    /* Home: fast, subtitle and buttons type together */
+  if (isHome) {
     var leadItem = lead ? prepTyping(lead) : null;
     if (leadItem) {
       setTimeout(function () {
@@ -131,7 +289,6 @@
       }
     });
   } else if (lead) {
-    /* Other pages: single subtitle, normal speed */
     var pageItem = prepTyping(lead);
     if (pageItem) {
       setTimeout(function () {
@@ -140,19 +297,22 @@
     }
   }
 
-  /* Smooth fade between pages */
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest ? e.target.closest("a") : null;
-    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if ((a.target && a.target !== "_self") || a.hasAttribute("download")) return;
-    if (a.origin !== window.location.origin || a.pathname === window.location.pathname) return;
-    e.preventDefault();
-    body.classList.add("is-leaving");
-    setTimeout(function () { window.location.href = a.href; }, 280);
-  });
-  window.addEventListener("pageshow", function () { body.classList.remove("is-leaving"); });
+  /* ================= PAGE TRANSITION FALLBACK (curtain) ================= */
+  if (!supportsVT) {
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest ? e.target.closest("a") : null;
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if ((a.target && a.target !== "_self") || a.hasAttribute("download")) return;
+      if (a.origin !== window.location.origin || a.pathname === window.location.pathname) return;
+      e.preventDefault();
+      try { sessionStorage.setItem("curtain", "1"); } catch (err) {}
+      html.classList.add("curtain-cover");
+      setTimeout(function () { window.location.href = a.href; }, 450);
+    });
+    window.addEventListener("pageshow", function () { html.classList.remove("curtain-cover"); });
+  }
 
-  /* Reveal elements while scrolling */
+  /* ================= REVEAL ON SCROLL ================= */
   if ("IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -170,6 +330,7 @@
     });
   }
 
+  /* ================= POINTER EFFECTS ================= */
   if (fine) {
     /* 3D tilt + light glare on cards */
     document.querySelectorAll(".feature__item .archive__item, .post-card").forEach(function (card) {
@@ -195,25 +356,40 @@
       btn.addEventListener("mouseleave", function () { btn.style.transform = ""; });
     });
 
-    /* Soft light following the cursor */
+    /* Custom cursor + soft glow */
     var glow = document.querySelector(".cursor-glow");
-    if (glow) {
-      var gx = window.innerWidth / 2, gy = window.innerHeight / 2, tx = gx, ty = gy;
-      window.addEventListener("mousemove", function (e) {
-        tx = e.clientX;
-        ty = e.clientY;
-        glow.style.opacity = "1";
-      });
-      (function follow() {
-        gx += (tx - gx) * 0.12;
-        gy += (ty - gy) * 0.12;
-        glow.style.transform = "translate(" + gx + "px, " + gy + "px)";
-        window.requestAnimationFrame(follow);
-      })();
-    }
+    var dot = document.querySelector(".cursor-dot");
+    var ring = document.querySelector(".cursor-ring");
+    html.classList.add("has-cursor");
+    var cx = -100, cy = -100, rx = -100, ry = -100, gx = -300, gy = -300;
+    window.addEventListener("mousemove", function (e) {
+      cx = e.clientX;
+      cy = e.clientY;
+      html.classList.add("cursor-on");
+      if (glow) glow.style.opacity = "1";
+    });
+    document.addEventListener("mouseout", function (e) {
+      if (!e.relatedTarget) html.classList.remove("cursor-on");
+    });
+    window.addEventListener("mousedown", function () { html.classList.add("cursor-down"); });
+    window.addEventListener("mouseup", function () { html.classList.remove("cursor-down"); });
+    document.addEventListener("mouseover", function (e) {
+      var t = e.target.closest ? e.target.closest("a, button, .btn, input, textarea, select, label, .theme-toggle") : null;
+      html.classList.toggle("cursor-hover", !!t);
+    });
+    (function follow() {
+      rx += (cx - rx) * 0.2;
+      ry += (cy - ry) * 0.2;
+      gx += (cx - gx) * 0.12;
+      gy += (cy - gy) * 0.12;
+      if (dot) dot.style.transform = "translate3d(" + cx + "px, " + cy + "px, 0)";
+      if (ring) ring.style.transform = "translate3d(" + rx + "px, " + ry + "px, 0)";
+      if (glow) glow.style.transform = "translate(" + gx + "px, " + gy + "px)";
+      window.requestAnimationFrame(follow);
+    })();
   }
 
-  /* Hero: interactive particle network */
+  /* ================= HERO: particles, depth, shockwave ================= */
   if (!hero) return;
   var canvas = document.createElement("canvas");
   canvas.className = "hero-canvas";
@@ -222,6 +398,22 @@
   var particles = [];
   var mouse = { x: null, y: null };
   var w = 0, h = 0;
+  var tmx = 0, tmy = 0, pmx = 0, pmy = 0;
+  var dotColor, lineRGB, mouseRGB;
+
+  function readColors(t) {
+    if (t === "light") {
+      dotColor = "rgba(91, 33, 182, 0.65)";
+      lineRGB = "79, 70, 229";
+      mouseRGB = "124, 58, 237";
+    } else {
+      dotColor = "rgba(196, 181, 253, 0.9)";
+      lineRGB = "103, 232, 249";
+      mouseRGB = "167, 139, 250";
+    }
+  }
+  readColors(getTheme());
+  themeHooks.push(readColors);
 
   function resize() {
     var dpr = window.devicePixelRatio || 1;
@@ -235,29 +427,42 @@
     var count = Math.min(90, Math.floor((w * h) / 14000));
     particles = [];
     for (var i = 0; i < count; i++) {
+      var vx = (Math.random() - 0.5) * 0.6;
+      var vy = (Math.random() - 0.5) * 0.6;
       particles.push({
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
+        vx: vx, vy: vy, bvx: vx, bvy: vy,
         r: Math.random() * 1.8 + 0.8
       });
     }
   }
 
   function draw() {
+    pmx += (tmx - pmx) * 0.06;
+    pmy += (tmy - pmy) * 0.06;
+    hero.style.setProperty("--mx", pmx.toFixed(3));
+    hero.style.setProperty("--my", pmy.toFixed(3));
+    var ox = pmx * 28, oy = pmy * 22;
+
     if (window.pageYOffset < h + 200) {
       ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(ox, oy);
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
+        p.vx += (p.bvx - p.vx) * 0.03;
+        p.vy += (p.bvy - p.vy) * 0.03;
         p.x += p.vx;
         p.y += p.vy;
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
+        if (p.x < -40) { p.x = -40; p.vx = Math.abs(p.vx); p.bvx = Math.abs(p.bvx); }
+        if (p.x > w + 40) { p.x = w + 40; p.vx = -Math.abs(p.vx); p.bvx = -Math.abs(p.bvx); }
+        if (p.y < -40) { p.y = -40; p.vy = Math.abs(p.vy); p.bvy = Math.abs(p.bvy); }
+        if (p.y > h + 40) { p.y = h + 40; p.vy = -Math.abs(p.vy); p.bvy = -Math.abs(p.bvy); }
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(196, 181, 253, 0.9)";
+        ctx.fillStyle = dotColor;
         ctx.fill();
 
         for (var j = i + 1; j < particles.length; j++) {
@@ -265,7 +470,7 @@
           var dx = p.x - q.x, dy = p.y - q.y;
           var d = Math.sqrt(dx * dx + dy * dy);
           if (d < 130) {
-            ctx.strokeStyle = "rgba(103, 232, 249, " + (1 - d / 130) * 0.35 + ")";
+            ctx.strokeStyle = "rgba(" + lineRGB + ", " + (1 - d / 130) * 0.35 + ")";
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
@@ -275,17 +480,19 @@
         }
 
         if (mouse.x !== null) {
-          var mx = p.x - mouse.x, my = p.y - mouse.y;
+          var mxp = mouse.x - ox, myp = mouse.y - oy;
+          var mx = p.x - mxp, my = p.y - myp;
           var md = Math.sqrt(mx * mx + my * my);
           if (md < 180) {
-            ctx.strokeStyle = "rgba(167, 139, 250, " + (1 - md / 180) * 0.7 + ")";
+            ctx.strokeStyle = "rgba(" + mouseRGB + ", " + (1 - md / 180) * 0.7 + ")";
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
-            ctx.lineTo(mouse.x, mouse.y);
+            ctx.lineTo(mxp, myp);
             ctx.stroke();
           }
         }
       }
+      ctx.restore();
     }
     window.requestAnimationFrame(draw);
   }
@@ -294,11 +501,42 @@
     var rect = hero.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
+    tmx = (mouse.x / rect.width) * 2 - 1;
+    tmy = (mouse.y / rect.height) * 2 - 1;
   });
   hero.addEventListener("mouseleave", function () {
     mouse.x = null;
     mouse.y = null;
+    tmx = 0;
+    tmy = 0;
   });
+
+  /* Click: shockwave that pushes the particles away */
+  hero.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("a, button")) return;
+    var rect = hero.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    ["click-ring", "click-ring click-ring--2"].forEach(function (cls) {
+      var ringEl = document.createElement("span");
+      ringEl.className = cls;
+      ringEl.style.left = x + "px";
+      ringEl.style.top = y + "px";
+      hero.appendChild(ringEl);
+      setTimeout(function () { ringEl.remove(); }, 1200);
+    });
+    var ox = pmx * 28, oy = pmy * 22;
+    particles.forEach(function (p) {
+      var dx = p.x + ox - x, dy = p.y + oy - y;
+      var d = Math.sqrt(dx * dx + dy * dy) || 1;
+      if (d < 280) {
+        var force = (1 - d / 280) * 9;
+        p.vx += (dx / d) * force;
+        p.vy += (dy / d) * force;
+      }
+    });
+  });
+
   window.addEventListener("resize", resize);
   window.addEventListener("load", resize);
 
