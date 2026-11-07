@@ -8,13 +8,13 @@ permalink: /context-switching/
 
 A computer runs a browser, music and a chat app at the same time, but one CPU core can run only one program at a time. How is this possible? The answer is the **context switch**: the operating system saves the state of one process and loads the state of another, many times every second.
 
-In this talk I explain three things:
+In this talk we explain three things:
 
 1. **What is it?** Processes, the PCB and the idea of a context switch.
 2. **How does it work?** The steps inside the operating system, with examples from Windows and Linux.
 3. **What does it cost?** The time of one switch, the hidden cost of a cold cache, and how to see context switches on your own computer.
 
-**Date:** 12 November 2026 · **Length:** about 10 minutes
+**Presenters:** Emre Kuzal &amp; Orhan Akman · **Date:** 12 November 2026 · **Length:** about 10 minutes
 
 ## Slides
 
@@ -46,7 +46,7 @@ In this talk I explain three things:
 ## Sources
 
 <ol class="src-list">
-  <li><span class="src-tag">Paper</span><a href="https://web.stanford.edu/~ouster/cgi-bin/papers/osfaster.pdf" target="_blank" rel="noopener">Ousterhout, J. (1990). Why Aren't Operating Systems Getting Faster As Fast as Hardware? USENIX Summer Conference.</a></li>
+  <li><span class="src-tag">Paper</span><a href="https://www.cs.fsu.edu/~awang/courses/cop5611_s2017/slow_os.pdf" target="_blank" rel="noopener">Ousterhout, J. (1990). Why Aren't Operating Systems Getting Faster As Fast as Hardware? USENIX Summer Conference.</a></li>
   <li><span class="src-tag">Paper</span><a href="https://www.cs.rochester.edu/~kshen/papers/expcs2007.pdf" target="_blank" rel="noopener">Li, C., Ding, C. &amp; Shen, K. (2007). Quantifying the Cost of Context Switch. ACM Workshop on Experimental Computer Science (ExpCS).</a></li>
   <li><span class="src-tag">Book</span><a href="https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf" target="_blank" rel="noopener">Arpaci-Dusseau, R. &amp; Arpaci-Dusseau, A. Operating Systems: Three Easy Pieces, Chapter 6: Limited Direct Execution.</a></li>
   <li><span class="src-tag">Tech doc</span><a href="https://learn.microsoft.com/en-us/windows/win32/procthread/context-switches" target="_blank" rel="noopener">Microsoft Learn. Context Switches.</a></li>
