@@ -32,7 +32,7 @@ In this talk we explain three things:
   </a>
   <a class="deck-card" href="{{ '/assets/slides/context-switching.pdf' | relative_url }}" target="_blank" rel="noopener">
     <div class="deck-card__media">
-      <img src="{{ '/assets/slides/cs-pdf.webp' | relative_url }}" width="960" height="540" alt="A slide from the PDF version" loading="lazy">
+      <img src="{{ '/assets/slides/cs-pdf.webp' | relative_url }}" width="960" height="540" alt="Second slide of the PDF version" loading="lazy">
       <span class="deck-card__play"><i class="fas fa-file-pdf"></i></span>
       <span class="deck-card__badge"><i class="fas fa-file-pdf"></i> PDF</span>
     </div>
