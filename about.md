@@ -4,8 +4,42 @@ excerpt: "Get to know me"
 permalink: /about/
 ---
 
-Hello, I am Emre Kuzal. I am a third-year Computer Engineering student. I am from Mersin and I am 21 years old.
+Hello, I am Emre Kuzal. I am 21 years old and I am from Mersin. I am a third-year Computer Engineering student at Necmettin Erbakan University. I am interested in the IT sector.
 
-I study at Necmettin Erbakan University.
+<div class="info-grid">
+  <div class="info-tile"><i class="fas fa-building-columns"></i><span>University</span><strong>Necmettin Erbakan University</strong></div>
+  <div class="info-tile"><i class="fas fa-laptop-code"></i><span>Department</span><strong>Computer Engineering</strong></div>
+  <div class="info-tile"><i class="fas fa-graduation-cap"></i><span>Year</span><strong>3rd year</strong></div>
+  <div class="info-tile"><i class="fas fa-location-dot"></i><span>City</span><strong>Mersin, Türkiye</strong></div>
+</div>
 
-I am interested in the IT sector.
+## My hobbies
+
+<div class="hobby-list">
+  <div class="hobby"><i class="fas fa-gamepad"></i><p>I like playing computer games.</p></div>
+  <div class="hobby"><i class="fas fa-film"></i><p>I like watching TV series and films.</p></div>
+  <div class="hobby"><i class="fas fa-rocket"></i><p>I like following new things in the IT sector and trying them.</p></div>
+</div>
+
+## Skills
+
+<div class="skill-badges">
+  <span><i class="fab fa-html5"></i> HTML</span>
+  <span><i class="fab fa-css3-alt"></i> CSS</span>
+  <span><i class="fab fa-js"></i> JavaScript</span>
+  <span><i class="fas fa-mobile-screen-button"></i> Flutter &amp; Dart</span>
+  <span><i class="fas fa-database"></i> SQL</span>
+  <span><i class="fab fa-git-alt"></i> Git</span>
+  <span><i class="fab fa-github"></i> GitHub</span>
+  <span><i class="fas fa-microchip"></i> Operating Systems</span>
+</div>
+
+<div class="contact-box">
+  <h2>Contact me</h2>
+  <p>Do you want to talk about a project or an idea? Send me a message.</p>
+  <div class="contact-links">
+    <a class="btn btn--primary" href="mailto:emre33kuzal@gmail.com"><i class="fas fa-envelope"></i> E-mail</a>
+    <a class="btn contact-ghost" href="https://www.linkedin.com/in/emre-kuzal-73b90932b" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i> LinkedIn</a>
+    <a class="btn contact-ghost" href="https://github.com/emrkzl44" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+  </div>
+</div>

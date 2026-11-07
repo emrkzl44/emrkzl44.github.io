@@ -863,6 +863,119 @@ html[data-theme="light"] .theme-toggle__knob .tt-sun { opacity: 1; transform: no
   background: linear-gradient(90deg, transparent, #7c3aed, #06b6d4, transparent);
 }
 
+/* ================= ABOUT PAGE ================= */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.9em;
+  margin: 1.4em 0 0.6em;
+}
+.info-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 1em 1.1em;
+  border-radius: 16px;
+  background: var(--chip-bg);
+  border: 1px solid var(--border-soft);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.info-tile:hover { transform: translateY(-4px); border-color: rgba(167, 139, 250, 0.6); }
+.info-tile i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2em;
+  height: 2.2em;
+  margin-bottom: 0.45em;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--accent-grad);
+}
+.info-tile span { font-size: 0.75em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.layout--single .page__content .info-tile strong { font-family: $header-font-family; font-size: 1em; line-height: 1.3; color: var(--heading); }
+
+.hobby-list { display: grid; gap: 0.8em; margin-top: 0.8em; }
+.hobby {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 0.85em 1.1em;
+  border-radius: 16px;
+  background: var(--chip-bg);
+  border: 1px solid var(--border-soft);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.hobby:hover { transform: translateX(6px); border-color: rgba(167, 139, 250, 0.6); }
+.hobby i {
+  flex: 0 0 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.4em;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent-grad);
+}
+.layout--single .page__content .hobby p { margin: 0; }
+
+.skill-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin-top: 0.8em;
+}
+.skill-badges span {
+  padding: 0.45em 1em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--heading);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.skill-badges span:hover {
+  transform: translateY(-3px);
+  border-color: #a78bfa;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.3);
+}
+.skill-badges i { margin-right: 0.35em; color: #22d3ee; }
+
+.contact-box {
+  margin-top: 2.2em;
+  padding: 1.6em 1.6em 1.4em;
+  text-align: center;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--card-border) border-box;
+}
+.layout--single .page__content .contact-box h2 { margin-top: 0; }
+.layout--single .page__content .contact-box p { color: var(--muted); }
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em;
+}
+.contact-links .btn { padding: 0.7em 1.4em; }
+.contact-links .btn i { margin-right: 0.4em; }
+.contact-links .btn--primary {
+  color: #fff;
+  border: none;
+  background: var(--accent-grad);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+.contact-links .btn--primary:hover { color: #fff; filter: brightness(1.12); }
+.contact-links .contact-ghost {
+  color: var(--heading);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+}
+.contact-links .contact-ghost:hover { color: var(--heading); border-color: rgba(167, 139, 250, 0.8); }
+
 /* ================= SLIDE CARDS + SOURCES ================= */
 .deck-cards {
   display: grid;
