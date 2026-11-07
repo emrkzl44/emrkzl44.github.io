@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Switching — Slides · Emre Kuzal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0b1020; --surface: #131b38; --text: #e8edf7; --muted: #9aa6bf;
+  --violet: #a78bfa; --cyan: #22d3ee; --pink: #f472b6; --amber: #fbbf24;
+  --grad: linear-gradient(135deg, #7c3aed, #06b6d4);
+}
+html, body { background: var(--bg); }
+body { font-family: "Inter", sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.slide {
+  position: relative; width: 1920px; height: 1080px; overflow: hidden;
+  padding: 110px 140px 100px; page-break-after: always; break-after: page;
+  background:
+    radial-gradient(900px 600px at 85% 10%, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(800px 600px at 5% 100%, rgba(6, 182, 212, 0.16), transparent 60%),
+    var(--bg);
+}
+.slide::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse at 70% 30%, #000 10%, transparent 70%);
+}
+.slide > * { position: relative; z-index: 1; }
+.slide > .circuit { position: absolute; top: 0; right: 0; z-index: 0; opacity: .8; }
+.part { position: absolute; top: 56px; left: 140px; font: 600 26px "Inter"; letter-spacing: .18em; text-transform: uppercase; color: var(--cyan); }
+.num { position: absolute; bottom: 48px; right: 70px; font: 500 26px "Space Grotesk"; color: var(--muted); }
+.foot { position: absolute; bottom: 56px; left: 140px; font: 500 32px "Inter"; color: var(--muted); }
+h1, h2 { font-family: "Space Grotesk", sans-serif; letter-spacing: -0.02em; }
+h2 { font-size: 84px; font-weight: 700; line-height: 1.05; margin-bottom: 64px; }
+h2 .g, h1 .g, .g { color: #8be9fd; }
+ul.b { list-style: none; display: grid; gap: 34px; }
+ul.b li { font-size: 48px; line-height: 1.25; padding-left: 64px; position: relative; }
+ul.b li::before { content: ""; position: absolute; left: 0; top: 0.42em; width: 26px; height: 26px; border-radius: 8px; background: var(--grad); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; }
+.card { background: var(--surface); border: 2px solid rgba(167,139,250,0.35); border-radius: 32px; }
+.mono { font-family: Consolas, "DejaVu Sans Mono", monospace; }
+.hl { color: var(--cyan); font-weight: 600; }
+.hv { color: var(--violet); font-weight: 600; }
+
+/* 1 title */
+.title h1 { font-size: 132px; line-height: 1.02; font-weight: 700; margin: 120px 0 50px; }
+.title .sub { font-size: 50px; color: var(--muted); }
+.title .who { position: absolute; left: 140px; bottom: 120px; font-size: 38px; line-height: 1.5; }
+.title .who b { font-family: "Space Grotesk"; font-size: 46px; }
+.title .chip { position: absolute; right: 120px; top: 260px; }
+
+/* 2 map */
+.map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px; margin-top: 30px; }
+.map .card { padding: 60px 50px; height: 520px; }
+.map .n { font: 700 120px "Space Grotesk"; color: #a78bfa; line-height: 1; }
+.map h3 { font: 700 58px "Space Grotesk"; margin: 40px 0 24px; }
+.map p { font-size: 40px; color: var(--muted); line-height: 1.35; }
+
+/* 3 problem */
+.orbit { position: relative; width: 640px; height: 640px; margin: auto; }
+.orbit .core { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px; }
+.orbit .core i { font-size: 96px; } .orbit .core span { font: 700 34px "Space Grotesk"; margin-top: 8px; }
+.orbit .app { position: absolute; width: 130px; height: 130px; border-radius: 34px; background: var(--surface); border: 2px solid rgba(255,255,255,.14); display: flex; align-items: center; justify-content: center; font-size: 60px; color: var(--violet); }
+.orbit svg { position: absolute; inset: 0; }
+
+/* 4 pcb */
+.pcb { padding: 50px 56px; }
+.pcb .head { font: 700 50px "Space Grotesk"; margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
+.pcb .head i { color: var(--violet); }
+.pcb .row { display: flex; justify-content: space-between; font-size: 40px; padding: 22px 0; border-top: 2px solid rgba(255,255,255,.08); }
+.pcb .row span:last-child { color: var(--cyan); }
+
+/* 5 definition */
+.def { font: 700 70px "Space Grotesk"; line-height: 1.2; margin-bottom: 90px; }
+.flow { display: flex; align-items: center; justify-content: space-between; }
+.box { width: 300px; height: 200px; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 46px "Space Grotesk"; }
+.box small { font: 500 30px "Inter"; color: var(--muted); margin-top: 8px; }
+.box.a { background: rgba(167,139,250,.16); border: 3px solid var(--violet); }
+.box.b { background: rgba(34,211,238,.14); border: 3px solid var(--cyan); }
+.box.os { background: var(--grad); color: #fff; width: 520px; }
+.box.os small { color: #e0f2fe; }
+.arrow { font-size: 70px; color: var(--muted); }
+
+/* 6 tiles */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+.tile { padding: 46px 50px; display: flex; gap: 40px; align-items: center; }
+.tile .ic { flex: 0 0 120px; height: 120px; border-radius: 30px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 58px; color: #fff; }
+.tile b { display: block; font: 700 48px "Space Grotesk"; margin-bottom: 8px; }
+.tile span { font-size: 36px; color: var(--muted); }
+
+/* 7/8 steps */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 34px; }
+.step { padding: 44px 36px; height: 500px; display: flex; flex-direction: column; }
+.step .sn { width: 90px; height: 90px; border-radius: 50%; background: var(--grad); display: flex; align-items: center; justify-content: center; font: 700 48px "Space Grotesk"; color: #fff; margin-bottom: 40px; }
+.step b { font: 700 46px "Space Grotesk"; line-height: 1.15; }
+.step span { font-size: 34px; color: var(--muted); margin-top: 20px; line-height: 1.35; }
+.note { margin-top: 44px; font-size: 34px; color: var(--muted); }
+
+/* 9 scheduler */
+.os2 { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+.os2 .card { padding: 56px; height: 560px; }
+.os2 .logo { font-size: 90px; color: var(--violet); }
+.os2 h3 { font: 700 60px "Space Grotesk"; margin: 26px 0 30px; }
+.os2 p { font-size: 40px; line-height: 1.45; color: var(--text); }
+.os2 p span { color: var(--muted); }
+
+/* 10 cost */
+.big { font: 700 150px "Space Grotesk"; line-height: 1; color: #8be9fd; white-space: nowrap; }
+.bigsub { font-size: 44px; color: var(--muted); margin: 10px 0 60px; }
+
+/* 11 cache */
+.cache { display: flex; gap: 70px; align-items: center; justify-content: center; margin-bottom: 60px; }
+.cache .grid { display: grid; grid-template-columns: repeat(4, 70px); gap: 12px; padding: 30px; }
+.cache .grid i { display: block; width: 70px; height: 70px; border-radius: 14px; }
+.cache .lbl { text-align: center; font: 700 40px "Space Grotesk"; margin-top: 18px; }
+
+/* 12 terminal */
+.term { padding: 0; overflow: hidden; }
+.term .bar { height: 64px; background: rgba(255,255,255,.06); display: flex; align-items: center; gap: 14px; padding-left: 28px; }
+.term .bar i { width: 20px; height: 20px; border-radius: 50%; display: block; }
+.term pre { font-family: Consolas, "DejaVu Sans Mono", monospace; font-size: 33px; line-height: 1.55; padding: 34px 40px; color: #cbd5e1; }
+.term .p { color: var(--cyan); }
+.term .c { color: #0b1020; background: var(--amber); border-radius: 6px; padding: 0 6px; font-weight: 700; }
+
+/* 13 sum */
+.sum { display: grid; gap: 34px; margin-bottom: 70px; }
+.sum div { font-size: 52px; display: flex; gap: 36px; align-items: center; }
+.sum i { flex: 0 0 96px; height: 96px; border-radius: 26px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 46px; color: #fff; }
+.thanks { font: 700 92px "Space Grotesk"; }
+
+/* 14 sources */
+.src { list-style: none; display: grid; gap: 20px; counter-reset: s; }
+.src li { counter-increment: s; font-size: 32px; line-height: 1.3; display: flex; gap: 26px; align-items: baseline; }
+.src li::before { content: counter(s); flex: 0 0 52px; height: 52px; border-radius: 14px; background: var(--grad); color: #fff; font: 700 28px "Space Grotesk"; display: flex; align-items: center; justify-content: center; }
+.src em { color: var(--muted); font-style: normal; }
+.tag { font: 600 22px "Inter"; text-transform: uppercase; letter-spacing: .1em; color: var(--cyan); border: 2px solid rgba(34,211,238,.45); padding: 2px 12px; border-radius: 999px; white-space: nowrap; }
+
+/* ===== DECK MODE ===== */
+html, body { height: 100%; overflow: hidden; background: #05070f; }
+body { user-select: none; }
+#stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+#deck { position: relative; width: 1920px; height: 1080px; flex: none; transform: scale(var(--s, 0.5)); transform-origin: center center; box-shadow: 0 40px 120px rgba(0,0,0,.6); border-radius: 6px; overflow: hidden; background: var(--bg); }
+#deck .slide { position: absolute; inset: 0; page-break-after: auto; opacity: 0; visibility: hidden; transform: translateX(110px) scale(.97); filter: blur(10px);
+  transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), filter .8s ease, visibility 0s linear 1s; }
+#deck .slide.active { opacity: 1; visibility: visible; transform: none; filter: none; transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), filter .8s ease, visibility 0s; }
+#deck .slide.left { transform: translateX(-110px) scale(.97); }
+
+/* staggered entrance */
+.a { opacity: 0; }
+.slide.active .a { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d, 0s) both; }
+@keyframes aIn { from { opacity: 0; transform: translateY(46px) scale(.96); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+.slide.active h2.a, .slide.active h1.a { animation-name: hIn; }
+@keyframes hIn { from { opacity: 0; transform: translateX(-60px); filter: blur(12px); letter-spacing: .05em; } to { opacity: 1; transform: none; filter: blur(0); } }
+
+/* circuit flow */
+.slide.active .circuit path { stroke-dasharray: 14 12; animation: flowDash 2.4s linear infinite; }
+.slide.active .circuit circle { animation: nodePulse 2s ease-in-out infinite; }
+.slide.active .circuit circle:nth-child(2n) { animation-delay: .7s; }
+@keyframes flowDash { to { stroke-dashoffset: -52; } }
+@keyframes nodePulse { 50% { stroke-width: 6; } }
+
+/* chip */
+.slide.active .chip svg, .slide.active .orbit .core svg { animation: chipFloat 4s ease-in-out infinite; }
+@keyframes chipFloat { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-16px) rotate(1.5deg); } }
+.slide.active .chip svg > circle:first-of-type, .slide.active .orbit .core svg > circle:first-of-type { transform-origin: 200px 200px; animation: glowPulse 2.6s ease-in-out infinite; }
+@keyframes glowPulse { 50% { opacity: .55; transform: scale(.9); } }
+
+/* orbit: the OS switches between apps */
+.orbit > svg { transform-origin: 320px 320px; }
+.slide.active .orbit > svg { animation: spin 18s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.orbit .app { transition: transform .35s cubic-bezier(.2,1.4,.4,1), box-shadow .35s, border-color .35s, color .35s, background .35s; }
+.orbit .app.on { transform: scale(1.22); color: #fff; background: linear-gradient(135deg,#7c3aed,#06b6d4); border-color: transparent; box-shadow: 0 0 60px rgba(34,211,238,.7); }
+.orbit .beam { position: absolute; left: 50%; top: 50%; width: 250px; height: 6px; margin-top: -3px; transform-origin: 0 50%; border-radius: 6px; background: linear-gradient(90deg, rgba(167,139,250,.9), rgba(34,211,238,0)); transition: transform .35s cubic-bezier(.2,.9,.3,1); z-index: 0; }
+
+/* flow packet */
+.flow { position: relative; }
+.pkt { position: absolute; top: -78px; left: 0; padding: 10px 22px; border-radius: 999px; font: 600 28px "Inter"; color: #fff; background: linear-gradient(135deg,#7c3aed,#06b6d4); box-shadow: 0 0 40px rgba(124,58,237,.8); opacity: 0; white-space: nowrap; }
+.slide.active .pkt { animation: pkt 4s cubic-bezier(.65,0,.35,1) 1.4s infinite; }
+@keyframes pkt { 0% { left: 40px; opacity: 0; } 8% { opacity: 1; } 45% { left: 710px; } 55% { left: 710px; } 92% { opacity: 1; } 100% { left: 1420px; opacity: 0; } }
+.slide.active .box.a { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d,0s) both, boxA 4s ease-in-out 1.4s infinite; }
+.slide.active .box.b { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d,0s) both, boxB 4s ease-in-out 1.4s infinite; }
+.slide.active .box.os { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d,0s) both, boxOS 4s ease-in-out 1.4s infinite; }
+@keyframes boxA { 0%,15% { box-shadow: 0 0 60px rgba(167,139,250,.75); transform: scale(1.06); } 30%,100% { box-shadow: none; transform: none; } }
+@keyframes boxOS { 0%,35% { filter: none; transform: none; } 45%,55% { filter: brightness(1.25); transform: scale(1.06); box-shadow: 0 0 70px rgba(34,211,238,.6); } 65%,100% { filter: none; transform: none; box-shadow: none; } }
+@keyframes boxB { 0%,80% { box-shadow: none; transform: none; } 90%,100% { box-shadow: 0 0 60px rgba(34,211,238,.75); transform: scale(1.06); } }
+
+/* steps cycle */
+.step { transition: transform .45s cubic-bezier(.2,1.2,.4,1), border-color .45s, box-shadow .45s; }
+.step.on { transform: translateY(-18px); border-color: #22d3ee; box-shadow: 0 24px 60px rgba(34,211,238,.28); }
+.step .sn { transition: transform .45s cubic-bezier(.2,1.4,.4,1), box-shadow .45s; }
+.step.on .sn { transform: scale(1.18); box-shadow: 0 0 40px rgba(34,211,238,.8); }
+
+/* tiles & icons */
+.slide.active .tile .ic, .slide.active .sum i { animation: pop .8s cubic-bezier(.2,1.6,.4,1) calc(var(--d,0s) + .25s) both; }
+@keyframes pop { from { transform: scale(0) rotate(-40deg); } to { transform: none; } }
+.card { transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease; }
+
+/* big number */
+.slide.active .big { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d,0s) both, bigGlow 3s ease-in-out 1.5s infinite; }
+@keyframes bigGlow { 50% { text-shadow: 0 0 50px rgba(34,211,238,.55); } }
+
+/* cold cache */
+.cache .grid i { transition: background .4s ease, transform .4s cubic-bezier(.2,1.4,.4,1), box-shadow .4s; }
+.cache .grid i.flip { background: #22d3ee !important; transform: scale(1.12); box-shadow: 0 0 24px rgba(34,211,238,.8); }
+.cache .grid i.miss { background: #f472b6 !important; transform: scale(.85); }
+
+/* terminal */
+.term .ln { display: inline-block; opacity: 0; }
+.slide.active .term .ln { animation: lnIn .45s ease var(--ld, 0s) both; }
+@keyframes lnIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: none; } }
+.c.bump { animation: bump .5s ease; }
+@keyframes bump { 0% { background: #fff; transform: scale(1.25); } 100% { transform: none; } }
+
+/* thanks */
+.slide.active .thanks .g { display: inline-block; animation: wave 2.4s ease-in-out 2s infinite; }
+@keyframes wave { 0%,100% { transform: none; } 20% { transform: translateY(-10px) rotate(-2deg); } 40% { transform: none; } }
+
+/* ===== UI ===== */
+.ui { position: fixed; z-index: 50; transition: opacity .4s ease, transform .4s ease; }
+body.idle .ui.hide-idle { opacity: 0; pointer-events: none; }
+#topbar { top: 18px; right: 18px; display: flex; gap: 10px; }
+.ubtn { width: 52px; height: 52px; border-radius: 16px; border: 1px solid rgba(255,255,255,.16); background: rgba(15,21,48,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease; text-decoration: none; }
+.ubtn:hover { transform: translateY(-2px) scale(1.06); background: rgba(124,58,237,.35); border-color: rgba(167,139,250,.8); box-shadow: 0 0 24px rgba(124,58,237,.5); color: #fff; }
+.ubtn.close:hover { background: rgba(244,63,94,.35); border-color: rgba(251,113,133,.8); box-shadow: 0 0 24px rgba(244,63,94,.45); }
+.nav { top: 50%; width: 60px; height: 60px; margin-top: -30px; border-radius: 50%; }
+#prev { left: 18px; } #next { right: 18px; }
+#progress { left: 0; right: 0; bottom: 0; height: 5px; background: rgba(255,255,255,.06); }
+#progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#7c3aed,#06b6d4); box-shadow: 0 0 14px rgba(34,211,238,.7); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+#counter { bottom: 18px; left: 22px; font: 600 15px "Inter"; letter-spacing: .08em; color: #94a3b8; background: rgba(15,21,48,.72); border: 1px solid rgba(255,255,255,.12); padding: 7px 14px; border-radius: 999px; }
+#hint { left: 50%; bottom: 34px; transform: translateX(-50%); font: 500 15px "Inter"; color: #cbd5e1; background: rgba(15,21,48,.85); border: 1px solid rgba(167,139,250,.4); padding: 10px 18px; border-radius: 999px; }
+#hint.gone { opacity: 0; transform: translateX(-50%) translateY(10px); pointer-events: none; }
+kbd { font: 600 13px "Inter"; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; transition-duration: .01s !important; }
+}
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+
+<!-- 1 TITLE -->
+<section class="slide title"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">BİL 333 · Mesleki Yabancı Dil</div>
+  <h1>How One CPU Runs<br><span class="g">Many Programs</span></h1>
+  <div class="sub">Context Switching</div>
+  <div class="chip"><svg viewBox="0 0 400 400" width="470" height="470" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="glowa" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7c3aed" stop-opacity=".75"/><stop offset=".55" stop-color="#06b6d4" stop-opacity=".18"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/></radialGradient>
+<linearGradient id="pkga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+<linearGradient id="pina" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+<linearGradient id="corea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4c1d95"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
+</defs>
+<circle cx="200" cy="200" r="200" fill="url(#glowa)"/>
+<g fill="url(#pina)"><rect x="104" y="40" width="12" height="44" rx="5"/><rect x="104" y="316" width="12" height="44" rx="5"/><rect x="40" y="104" width="44" height="12" rx="5"/><rect x="316" y="104" width="44" height="12" rx="5"/><rect x="130" y="40" width="12" height="44" rx="5"/><rect x="130" y="316" width="12" height="44" rx="5"/><rect x="40" y="130" width="44" height="12" rx="5"/><rect x="316" y="130" width="44" height="12" rx="5"/><rect x="156" y="40" width="12" height="44" rx="5"/><rect x="156" y="316" width="12" height="44" rx="5"/><rect x="40" y="156" width="44" height="12" rx="5"/><rect x="316" y="156" width="44" height="12" rx="5"/><rect x="182" y="40" width="12" height="44" rx="5"/><rect x="182" y="316" width="12" height="44" rx="5"/><rect x="40" y="182" width="44" height="12" rx="5"/><rect x="316" y="182" width="44" height="12" rx="5"/><rect x="208" y="40" width="12" height="44" rx="5"/><rect x="208" y="316" width="12" height="44" rx="5"/><rect x="40" y="208" width="44" height="12" rx="5"/><rect x="316" y="208" width="44" height="12" rx="5"/><rect x="234" y="40" width="12" height="44" rx="5"/><rect x="234" y="316" width="12" height="44" rx="5"/><rect x="40" y="234" width="44" height="12" rx="5"/><rect x="316" y="234" width="44" height="12" rx="5"/><rect x="260" y="40" width="12" height="44" rx="5"/><rect x="260" y="316" width="12" height="44" rx="5"/><rect x="40" y="260" width="44" height="12" rx="5"/><rect x="316" y="260" width="44" height="12" rx="5"/><rect x="286" y="40" width="12" height="44" rx="5"/><rect x="286" y="316" width="12" height="44" rx="5"/><rect x="40" y="286" width="44" height="12" rx="5"/><rect x="316" y="286" width="44" height="12" rx="5"/></g>
+<rect x="80" y="80" width="240" height="240" rx="38" fill="url(#pkga)"/>
+<rect x="84" y="84" width="232" height="232" rx="34" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+<rect x="124" y="124" width="152" height="152" rx="20" fill="#0b1020" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+<rect x="140" y="140" width="54" height="54" rx="10" fill="url(#corea)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="150" y="150" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="150" y="162" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="206" y="140" width="54" height="54" rx="10" fill="url(#corea)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="216" y="150" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="216" y="162" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="140" y="206" width="54" height="54" rx="10" fill="url(#corea)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="150" y="216" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="150" y="228" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="206" y="206" width="54" height="54" rx="10" fill="url(#corea)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="216" y="216" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="216" y="228" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/>
+<circle cx="100" cy="100" r="5" fill="rgba(255,255,255,.7)"/>
+<text x="200" y="300" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="22" fill="#fff" letter-spacing="6">CPU</text>
+</svg></div>
+  <div class="who"><b>Emre Kuzal</b><br>Computer Engineering · Necmettin Erbakan University<br>12 November 2026</div>
+</section>
+
+<!-- 2 MAP -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <h2>My talk has <span class="g">three parts</span></h2>
+  <div class="map">
+    <div class="card"><div class="n">1</div><h3>What is it?</h3><p>Processes and the idea of a context switch</p></div>
+    <div class="card"><div class="n">2</div><h3>How does it work?</h3><p>The steps inside the operating system</p></div>
+    <div class="card"><div class="n">3</div><h3>What does it cost?</h3><p>Time, cache and why it matters</p></div>
+  </div>
+  <div class="num">2</div>
+</section>
+
+<!-- 3 PROBLEM -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 1 · What is it?</div>
+  <h2>One CPU core, <span class="g">many programs</span></h2>
+  <div class="cols">
+    <ul class="b">
+      <li>One core runs <span class="hl">one program</span> at a time</li>
+      <li>But we run browser, music, chat… together</li>
+      <li>The trick: the OS <span class="hl">switches very fast</span></li>
+    </ul>
+    <div class="orbit">
+      <svg viewBox="0 0 640 640"><circle cx="320" cy="320" r="250" fill="none" stroke="rgba(167,139,250,.35)" stroke-width="3" stroke-dasharray="10 14"/></svg>
+      <div class="core"><svg viewBox="0 0 400 400" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="glowb" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7c3aed" stop-opacity=".75"/><stop offset=".55" stop-color="#06b6d4" stop-opacity=".18"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/></radialGradient>
+<linearGradient id="pkgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+<linearGradient id="pinb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+<linearGradient id="coreb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4c1d95"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
+</defs>
+<circle cx="200" cy="200" r="200" fill="url(#glowb)"/>
+<g fill="url(#pinb)"><rect x="104" y="40" width="12" height="44" rx="5"/><rect x="104" y="316" width="12" height="44" rx="5"/><rect x="40" y="104" width="44" height="12" rx="5"/><rect x="316" y="104" width="44" height="12" rx="5"/><rect x="130" y="40" width="12" height="44" rx="5"/><rect x="130" y="316" width="12" height="44" rx="5"/><rect x="40" y="130" width="44" height="12" rx="5"/><rect x="316" y="130" width="44" height="12" rx="5"/><rect x="156" y="40" width="12" height="44" rx="5"/><rect x="156" y="316" width="12" height="44" rx="5"/><rect x="40" y="156" width="44" height="12" rx="5"/><rect x="316" y="156" width="44" height="12" rx="5"/><rect x="182" y="40" width="12" height="44" rx="5"/><rect x="182" y="316" width="12" height="44" rx="5"/><rect x="40" y="182" width="44" height="12" rx="5"/><rect x="316" y="182" width="44" height="12" rx="5"/><rect x="208" y="40" width="12" height="44" rx="5"/><rect x="208" y="316" width="12" height="44" rx="5"/><rect x="40" y="208" width="44" height="12" rx="5"/><rect x="316" y="208" width="44" height="12" rx="5"/><rect x="234" y="40" width="12" height="44" rx="5"/><rect x="234" y="316" width="12" height="44" rx="5"/><rect x="40" y="234" width="44" height="12" rx="5"/><rect x="316" y="234" width="44" height="12" rx="5"/><rect x="260" y="40" width="12" height="44" rx="5"/><rect x="260" y="316" width="12" height="44" rx="5"/><rect x="40" y="260" width="44" height="12" rx="5"/><rect x="316" y="260" width="44" height="12" rx="5"/><rect x="286" y="40" width="12" height="44" rx="5"/><rect x="286" y="316" width="12" height="44" rx="5"/><rect x="40" y="286" width="44" height="12" rx="5"/><rect x="316" y="286" width="44" height="12" rx="5"/></g>
+<rect x="80" y="80" width="240" height="240" rx="38" fill="url(#pkgb)"/>
+<rect x="84" y="84" width="232" height="232" rx="34" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+<rect x="124" y="124" width="152" height="152" rx="20" fill="#0b1020" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+<rect x="140" y="140" width="54" height="54" rx="10" fill="url(#coreb)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="150" y="150" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="150" y="162" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="206" y="140" width="54" height="54" rx="10" fill="url(#coreb)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="216" y="150" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="216" y="162" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="140" y="206" width="54" height="54" rx="10" fill="url(#coreb)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="150" y="216" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="150" y="228" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/><rect x="206" y="206" width="54" height="54" rx="10" fill="url(#coreb)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><rect x="216" y="216" width="34" height="6" rx="3" fill="rgba(255,255,255,.55)"/><rect x="216" y="228" width="22" height="6" rx="3" fill="rgba(255,255,255,.35)"/>
+<circle cx="100" cy="100" r="5" fill="rgba(255,255,255,.7)"/>
+
+</svg></div>
+      <div class="app" style="left:255px;top:5px"><i class="fas fa-globe"></i></div>
+      <div class="app" style="left:505px;top:255px"><i class="fas fa-music"></i></div>
+      <div class="app" style="left:255px;top:505px"><i class="fas fa-code"></i></div>
+      <div class="app" style="left:5px;top:255px"><i class="fas fa-comment-dots"></i></div>
+    </div>
+  </div>
+  <div class="num">3</div>
+</section>
+
+<!-- 4 PROCESS / PCB -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 1 · What is it?</div>
+  <h2>Every program is a <span class="g">process</span></h2>
+  <div class="cols">
+    <ul class="b">
+      <li>Process = a <span class="hl">running</span> program</li>
+      <li>The OS keeps its information in a <span class="hl">PCB</span></li>
+      <li>PCB = Process Control Block</li>
+    </ul>
+    <div class="card pcb">
+      <div class="head"><i class="fas fa-id-card"></i> PCB of Process A</div>
+      <div class="row"><span>Program counter (PC)</span><span>next instruction</span></div>
+      <div class="row"><span>Stack pointer (SP)</span><span>top of stack</span></div>
+      <div class="row"><span>Registers</span><span>R1, R2, …</span></div>
+      <div class="row"><span>State</span><span>running / ready</span></div>
+    </div>
+  </div>
+  <div class="num">4</div>
+</section>
+
+<!-- 5 DEFINITION -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 1 · What is it?</div>
+  <h2>What is a <span class="g">context switch?</span></h2>
+  <div class="def">Save the state of one process,<br>load the state of another.</div>
+  <div class="flow"><span class="pkt"><i class="fas fa-microchip"></i> state</span>
+    <div class="box a">Process A<small>running</small></div>
+    <div class="arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="box os"><span><i class="fas fa-floppy-disk"></i> save A · load B <i class="fas fa-upload"></i></span><small>Operating system</small></div>
+    <div class="arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="box b">Process B<small>running</small></div>
+  </div>
+  <div class="num">5</div>
+</section>
+
+<!-- 6 WHEN -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 1 · What is it?</div>
+  <h2>When does it <span class="g">happen?</span></h2>
+  <div class="tiles">
+    <div class="card tile"><div class="ic"><i class="fas fa-stopwatch"></i></div><div><b>Timer interrupt</b><span>the time slice is over</span></div></div>
+    <div class="card tile"><div class="ic"><i class="fas fa-hard-drive"></i></div><div><b>Waiting for I/O</b><span>disk, network, keyboard</span></div></div>
+    <div class="card tile"><div class="ic"><i class="fas fa-moon"></i></div><div><b>Process sleeps</b><span>it gives the CPU back</span></div></div>
+    <div class="card tile"><div class="ic"><i class="fas fa-bolt"></i></div><div><b>Higher priority</b><span>a more important process is ready</span></div></div>
+  </div>
+  <div class="num">6</div>
+</section>
+
+<!-- 7 STEPS -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 2 · How does it work?</div>
+  <h2>Step by step</h2>
+  <div class="steps">
+    <div class="card step"><div class="sn">1</div><b>Timer interrupt</b><span>The CPU stops A and jumps to the OS</span></div>
+    <div class="card step"><div class="sn">2</div><b>Save A</b><span>A's registers go into PCB A</span></div>
+    <div class="card step"><div class="sn">3</div><b>Choose B</b><span>The scheduler picks the next process</span></div>
+    <div class="card step"><div class="sn">4</div><b>Load B</b><span>B's registers come back, B continues</span></div>
+  </div>
+  <div class="note"><i class="fas fa-book"></i> &nbsp;“Limited Direct Execution” — OSTEP, Chapter 6</div>
+  <div class="num">7</div>
+</section>
+
+<!-- 8 WINDOWS -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 2 · How does it work?</div>
+  <h2>A real example: <span class="g">Windows</span></h2>
+  <div class="steps">
+    <div class="card step"><div class="sn">1</div><b>Save</b><span>Save the context of the current thread</span></div>
+    <div class="card step"><div class="sn">2</div><b>Queue</b><span>Put it at the end of its priority queue</span></div>
+    <div class="card step"><div class="sn">3</div><b>Find</b><span>Find the highest-priority ready queue</span></div>
+    <div class="card step"><div class="sn">4</div><b>Run</b><span>Load the next thread's context and run it</span></div>
+  </div>
+  <div class="note"><i class="fab fa-windows"></i> &nbsp;Microsoft Learn, “Context Switches”</div>
+  <div class="num">8</div>
+</section>
+
+<!-- 9 SCHEDULER -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 2 · How does it work?</div>
+  <h2>Who chooses the <span class="g">next process?</span></h2>
+  <div class="os2">
+    <div class="card"><div class="logo"><i class="fab fa-linux"></i></div><h3>Linux</h3><p>CFS → <span class="hl">EEVDF</span><br><span>since Linux 6.6 (2023)</span><br>Goal: a fair share of CPU time</p></div>
+    <div class="card"><div class="logo"><i class="fab fa-windows"></i></div><h3>Windows</h3><p>Priority-based<br><span>32 priority levels</span><br>Goal: important threads first</p></div>
+  </div>
+  <div class="num">9</div>
+</section>
+
+<!-- 10 COST -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 3 · What does it cost?</div>
+  <h2>A switch is fast, <span class="g">but not free</span></h2>
+  <div class="cols" style="align-items:start; grid-template-columns: 1.15fr 1fr">
+    <div>
+      <div class="big">~1.2–2.2 µs</div>
+      <div class="bigsub">for one switch between Linux threads<br>(Bendersky, 2018)</div>
+    </div>
+    <ul class="b" style="margin-top:30px">
+      <li>Save and load registers</li>
+      <li>Jump into the kernel and back</li>
+      <li><span class="hl">Thousands</span> of switches per second add up</li>
+    </ul>
+  </div>
+  <div class="num">10</div>
+</section>
+
+<!-- 11 HIDDEN COST -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 3 · What does it cost?</div>
+  <h2>The hidden cost: <span class="g">a cold cache</span></h2>
+  <div class="cols">
+    <div>
+      <div class="cache">
+        <div><div class="card grid">
+          <i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+          <i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+          <i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+        </div><div class="lbl" style="color:#a78bfa">A's data</div></div>
+        <div class="arrow"><i class="fas fa-arrow-right"></i></div>
+        <div><div class="card grid cold">
+          <i style="background:#22d3ee"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+          <i style="background:#a78bfa"></i><i style="background:#22d3ee"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+          <i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i><i style="background:#a78bfa"></i>
+        </div><div class="lbl" style="color:#22d3ee">B needs new data</div></div>
+      </div>
+    </div>
+    <ul class="b">
+      <li>The cache is full of <span class="hv">A's data</span></li>
+      <li>B gets <span class="hl">cache misses</span> → slower</li>
+      <li>Often bigger than the direct cost <em style="color:var(--muted);font-style:normal">(Li et al., 2007)</em></li>
+    </ul>
+  </div>
+  <div class="foot">Hardware got faster, but OS work like switching did not keep up — Ousterhout, 1990</div>
+  <div class="num">11</div>
+</section>
+
+<!-- 12 DEMO -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 3 · What does it cost?</div>
+  <h2>See it on <span class="g">Linux</span></h2>
+  <div class="cols" style="grid-template-columns: 1.25fr 1fr">
+    <div class="card term">
+      <div class="bar"><i style="background:#f472b6"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i></div>
+<pre><span class="ln"><span class="p">$</span> vmstat 1</span>
+<span class="ln"> r  b ...   in   <span class="c">cs</span> us sy id</span>
+<span class="ln"> 1  0 ...  812 <span class="c live-cs">1534</span>  4  1 95</span>
+<span class="ln"> </span>
+<span class="ln"><span class="p">$</span> grep ctxt /proc/self/status</span>
+<span class="ln">voluntary_ctxt_switches:     1</span>
+<span class="ln">nonvoluntary_ctxt_switches:  0</span></pre>
+    </div>
+    <ul class="b">
+      <li><span class="hl">cs</span> = switches per second</li>
+      <li>Voluntary: the process waits</li>
+      <li>Nonvoluntary: the OS stops it</li>
+    </ul>
+  </div>
+  <div class="num">12</div>
+</section>
+
+<!-- 13 WINDOWS DEMO -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <div class="part">Part 3 · What does it cost?</div>
+  <h2>See it on <span class="g">Windows</span></h2>
+  <div class="card term" style="margin-bottom:56px">
+    <div class="bar"><i style="background:#f472b6"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i><span style="margin-left:18px;font:600 26px Inter;color:#9aa6bf">PowerShell</span></div>
+<pre style="font-size:31px"><span class="ln"><span class="p">PS&gt;</span> while ($true) {</span>
+<span class="ln">  (Get-CimInstance Win32_PerfFormattedData_PerfOS_System).ContextSwitchesPersec</span>
+<span class="ln">  Start-Sleep 1</span>
+<span class="ln">}</span>
+<span class="ln win-out"><span class="c">18452</span>
+<span class="c">21310</span>
+<span class="c">17986</span></span></pre>
+  </div>
+  <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:36px">
+    <div class="card tile" style="padding:34px 36px"><div class="ic" style="flex-basis:90px;height:90px;font-size:42px"><i class="fas fa-gauge-high"></i></div><div><b style="font-size:40px">Every second</b><span>switches per second</span></div></div>
+    <div class="card tile" style="padding:34px 36px"><div class="ic" style="flex-basis:90px;height:90px;font-size:42px"><i class="fas fa-repeat"></i></div><div><b style="font-size:40px">Loop</b><span>runs until Ctrl + C</span></div></div>
+    <div class="card tile" style="padding:34px 36px"><div class="ic" style="flex-basis:90px;height:90px;font-size:42px"><i class="fas fa-chart-line"></i></div><div><b style="font-size:40px">Thousands</b><span>even on an idle PC</span></div></div>
+  </div>
+  <div class="num">13</div>
+</section>
+
+<!-- 13 SUM UP -->
+<section class="slide"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <h2>To sum up</h2>
+  <div class="sum">
+    <div><i class="fas fa-microchip"></i> One CPU + fast switching = many programs</div>
+    <div><i class="fas fa-right-left"></i> A switch = save one state, load another</div>
+    <div><i class="fas fa-gauge-high"></i> Fast, but not free: fewer switches, faster system</div>
+  </div>
+  <div class="thanks">Thank you! <span class="g">Any questions?</span></div>
+  <div class="num">14</div>
+</section>
+
+<!-- 14 SOURCES -->
+<section class="slide" style="padding-top:90px"><svg class="circuit" viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+<g stroke="rgba(139,92,246,.35)" stroke-width="2">
+<path d="M700 40 H520 L480 80 H340"/><path d="M700 90 H560 L520 130 H420 L390 160"/><path d="M700 150 H600 L560 190 H470"/>
+<path d="M700 210 H640 L600 250 H540 L500 290"/><path d="M620 0 V60 L580 100"/><path d="M500 0 V30 L460 70 H380"/>
+</g>
+<g stroke="rgba(34,211,238,.35)" stroke-width="2"><path d="M700 300 H660 L620 340 H560"/><path d="M420 0 V20 L380 60 H300"/></g>
+<g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
+</svg>
+  <h2 style="margin-bottom:44px">Sources</h2>
+  <ol class="src">
+    <li><span>Ousterhout, J. (1990). <em>Why Aren't Operating Systems Getting Faster As Fast as Hardware?</em> USENIX</span><span class="tag">Paper</span></li>
+    <li><span>Li, C., Ding, C. &amp; Shen, K. (2007). <em>Quantifying the Cost of Context Switch.</em> ACM ExpCS</span><span class="tag">Paper</span></li>
+    <li><span>Arpaci-Dusseau, R. &amp; A. <em>Operating Systems: Three Easy Pieces</em>, Ch. 6: Limited Direct Execution</span><span class="tag">Book</span></li>
+    <li><span>Microsoft Learn. <em>Context Switches</em> — learn.microsoft.com</span><span class="tag">Tech doc</span></li>
+    <li><span>Linux Kernel Documentation. <em>CFS Scheduler</em> &amp; <em>EEVDF Scheduler</em> — docs.kernel.org</span><span class="tag">Tech doc</span></li>
+    <li><span>Bendersky, E. (2018). <em>Measuring context switching and memory overheads for Linux threads</em></span><span class="tag">Blog</span></li>
+    <li><span>Sigoure, B. “tsuna” (2010). <em>How long does it take to make a context switch?</em></span><span class="tag">Blog</span></li>
+    <li><span>gz/contextswitch — <em>github.com/gz/contextswitch</em></span><span class="tag">Code</span></li>
+    <li><span>GeeksforGeeks. <em>Context Switch in Operating System</em></span><span class="tag">Tutorial</span></li>
+  </ol>
+  <div class="num">15</div>
+</section>
+
+</div></div>
+
+<div id="topbar" class="ui hide-idle">
+  <button class="ubtn" id="fs" title="Full screen (F)" aria-label="Full screen"><i class="fas fa-expand"></i></button>
+  <a class="ubtn close" id="close" href="/context-switching/" title="Close" aria-label="Close"><i class="fas fa-xmark"></i></a>
+</div>
+<button class="ui hide-idle ubtn nav" id="prev" aria-label="Previous slide"><i class="fas fa-chevron-left"></i></button>
+<button class="ui hide-idle ubtn nav" id="next" aria-label="Next slide"><i class="fas fa-chevron-right"></i></button>
+<div class="ui" id="progress"><i></i></div>
+<div class="ui hide-idle" id="counter">1 / 15</div>
+<div class="ui" id="hint"><kbd>←</kbd> <kbd>→</kbd> to move &nbsp;·&nbsp; <kbd>F</kbd> full screen &nbsp;·&nbsp; click to go on</div>
+
+<script>
+(function () {
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+  var n = slides.length, cur = 0, timers = [];
+  var SEL = '.part, h1, h2, .sub, .who, .chip, .def, ul.b > li, .map .card, .tiles .card, .steps .card, .os2 .card, .flow > .box, .flow > .arrow, .cols > :not(ul), .bigsub, .big, .sum > div, .thanks, .src li, .note, .foot, .card.term';
+  slides.forEach(function (sl) {
+    var k = 0;
+    sl.querySelectorAll(SEL).forEach(function (el) {
+      if (el.closest('.a') && el.closest('.a') !== el) return;
+      el.classList.add('a');
+      el.style.setProperty('--d', (0.08 + k * 0.11).toFixed(2) + 's');
+      k++;
+    });
+    sl.querySelectorAll('.term').forEach(function (t) {
+      t.querySelectorAll('.ln').forEach(function (ln, i) { ln.style.setProperty('--ld', (0.9 + i * 0.22).toFixed(2) + 's'); });
+    });
+  });
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    deck.style.setProperty('--s', s);
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function clearTimers() { timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); timers = []; }
+
+  function startEffects(sl) {
+    clearTimers();
+    // orbit: the core "switches" from app to app
+    var orbit = sl.querySelector('.orbit');
+    if (orbit) {
+      var apps = orbit.querySelectorAll('.app'), beam = orbit.querySelector('.beam');
+      if (!beam) { beam = document.createElement('span'); beam.className = 'beam'; orbit.insertBefore(beam, orbit.querySelector('.core')); }
+      var angles = [-90, 0, 90, 180], ai = 0;
+      var tick = function () { apps.forEach(function (a, i) { a.classList.toggle('on', i === ai); }); beam.style.transform = 'rotate(' + angles[ai] + 'deg)'; ai = (ai + 1) % apps.length; };
+      timers.push(setTimeout(function () { tick(); timers.push(setInterval(tick, 750)); }, 900));
+    }
+    // steps: highlight one after another
+    var steps = sl.querySelectorAll('.step');
+    if (steps.length) {
+      var si = 0;
+      var st = function () { steps.forEach(function (s, i) { s.classList.toggle('on', i === si); }); si = (si + 1) % steps.length; };
+      timers.push(setTimeout(function () { st(); timers.push(setInterval(st, 1300)); }, 1300));
+    }
+    // cold cache: B's data replaces A's, with misses
+    var cold = sl.querySelector('.grid.cold');
+    if (cold) {
+      var cells = cold.querySelectorAll('i'), ci = 0;
+      cells.forEach(function (c) { c.classList.remove('flip', 'miss'); });
+      var ct = function () {
+        if (ci >= cells.length) { cells.forEach(function (c) { c.classList.remove('flip', 'miss'); }); ci = 0; return; }
+        var c = cells[ci++]; c.classList.add('miss');
+        setTimeout(function () { c.classList.remove('miss'); c.classList.add('flip'); }, 260);
+      };
+      timers.push(setTimeout(function () { timers.push(setInterval(ct, 420)); }, 1400));
+    }
+    // live counters
+    var cs = sl.querySelector('.live-cs');
+    if (cs) timers.push(setInterval(function () { cs.textContent = 1200 + Math.floor(Math.random() * 900); cs.classList.remove('bump'); void cs.offsetWidth; cs.classList.add('bump'); }, 1000));
+    var win = sl.querySelector('.win-out');
+    if (win) timers.push(setInterval(function () {
+      var spans = win.querySelectorAll('.c');
+      for (var i = 0; i < spans.length - 1; i++) spans[i].textContent = spans[i + 1].textContent;
+      var last = spans[spans.length - 1]; last.textContent = 15000 + Math.floor(Math.random() * 9000);
+      last.classList.remove('bump'); void last.offsetWidth; last.classList.add('bump');
+    }, 1000));
+  }
+
+  function go(i, fromHash) {
+    if (i < 0 || i >= n) return;
+    var dir = i > cur ? 1 : -1;
+    slides.forEach(function (sl, k) {
+      sl.classList.toggle('left', k < i);
+      if (k !== i) sl.classList.remove('active');
+    });
+    // restart entrance animations
+    var sl = slides[i];
+    sl.classList.remove('active'); void sl.offsetWidth; sl.classList.add('active');
+    cur = i;
+    document.querySelector('#progress i').style.width = ((i + 1) / n * 100) + '%';
+    document.getElementById('counter').textContent = (i + 1) + ' / ' + n;
+    if (!fromHash) history.replaceState(null, '', '#' + (i + 1));
+    startEffects(sl);
+  }
+  function next() { go(Math.min(cur + 1, n - 1)); }
+  function prev() { go(Math.max(cur - 1, 0)); }
+
+  document.addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].indexOf(e.key) > -1) { e.preventDefault(); next(); hideHint(); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].indexOf(e.key) > -1) { e.preventDefault(); prev(); hideHint(); }
+    else if (e.key === 'Home') go(0); else if (e.key === 'End') go(n - 1);
+    else if (e.key === 'f' || e.key === 'F') toggleFs();
+  });
+  document.getElementById('stage').addEventListener('click', function (e) {
+    if (e.clientX < window.innerWidth * 0.25) prev(); else next();
+    hideHint();
+  });
+  document.getElementById('next').addEventListener('click', function (e) { e.stopPropagation(); next(); hideHint(); });
+  document.getElementById('prev').addEventListener('click', function (e) { e.stopPropagation(); prev(); hideHint(); });
+
+  var tx = null;
+  document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (tx === null) return; var dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); } tx = null;
+  });
+
+  // full screen
+  var fsBtn = document.getElementById('fs');
+  function toggleFs() {
+    var d = document;
+    if (!d.fullscreenElement && !d.webkitFullscreenElement) {
+      var el = d.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    } else { (d.exitFullscreen || d.webkitExitFullscreen).call(d); }
+  }
+  fsBtn.addEventListener('click', function (e) { e.stopPropagation(); toggleFs(); });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+    document.addEventListener(ev, function () {
+      var on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      fsBtn.innerHTML = on ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+      fsBtn.title = on ? 'Exit full screen (F)' : 'Full screen (F)';
+      setTimeout(fit, 50);
+    });
+  });
+  document.getElementById('close').addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (document.fullscreenElement) document.exitFullscreen();
+  });
+
+  // hide controls when the mouse is still
+  var idleT;
+  function wake() { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(function () { document.body.classList.add('idle'); }, 2500); }
+  document.addEventListener('mousemove', wake); wake();
+  var hint = document.getElementById('hint');
+  function hideHint() { hint.classList.add('gone'); }
+  setTimeout(hideHint, 5000);
+
+  var start = parseInt((location.hash || '#1').slice(1), 10);
+  go(isNaN(start) ? 0 : Math.min(Math.max(start - 1, 0), n - 1), true);
+})();
+</script>
+</body>
+</html>
