@@ -313,12 +313,23 @@
         cy = e.clientY;
         glow.style.opacity = "1";
       });
-      (function follow() {
+      var glowRunning = false;
+      var follow = function () {
         gx += (cx - gx) * 0.12;
         gy += (cy - gy) * 0.12;
-        glow.style.transform = "translate(" + gx + "px, " + gy + "px)";
-        window.requestAnimationFrame(follow);
-      })();
+        glow.style.transform = "translate3d(" + gx + "px, " + gy + "px, 0)";
+        if (Math.abs(cx - gx) > 0.5 || Math.abs(cy - gy) > 0.5) {
+          window.requestAnimationFrame(follow);
+        } else {
+          glowRunning = false;
+        }
+      };
+      window.addEventListener("mousemove", function () {
+        if (!glowRunning) {
+          glowRunning = true;
+          window.requestAnimationFrame(follow);
+        }
+      }, { passive: true });
     }
   }
 
@@ -349,7 +360,7 @@
   themeHooks.push(readColors);
 
   function resize() {
-    var dpr = window.devicePixelRatio || 1;
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     w = hero.offsetWidth;
     h = hero.offsetHeight;
     canvas.width = w * dpr;
@@ -357,7 +368,7 @@
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var count = Math.min(90, Math.floor((w * h) / 14000));
+    var count = Math.min(window.innerWidth < 700 ? 35 : 70, Math.floor((w * h) / 16000));
     particles = [];
     for (var i = 0; i < count; i++) {
       var vx = (Math.random() - 0.5) * 0.6;
@@ -371,14 +382,39 @@
     }
   }
 
+  var heroVisible = true;
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (entries) {
+      heroVisible = entries[0].isIntersecting;
+      if (heroVisible) startDraw();
+    }).observe(hero);
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) startDraw(); });
+  var drawing = false;
+  function startDraw() {
+    if (!drawing) {
+      drawing = true;
+      window.requestAnimationFrame(draw);
+    }
+  }
+
   function draw() {
+    if (!heroVisible || document.hidden) {
+      drawing = false;
+      return;
+    }
     pmx += (tmx - pmx) * 0.06;
     pmy += (tmy - pmy) * 0.06;
-    hero.style.setProperty("--mx", pmx.toFixed(3));
-    hero.style.setProperty("--my", pmy.toFixed(3));
+    var mxs = pmx.toFixed(3), mys = pmy.toFixed(3);
+    if (mxs !== hero._mx || mys !== hero._my) {
+      hero._mx = mxs;
+      hero._my = mys;
+      hero.style.setProperty("--mx", mxs);
+      hero.style.setProperty("--my", mys);
+    }
     var ox = pmx * 28, oy = pmy * 22;
 
-    if (window.pageYOffset < h + 200) {
+    {
       ctx.clearRect(0, 0, w, h);
       ctx.save();
       ctx.translate(ox, oy);
@@ -401,8 +437,9 @@
         for (var j = i + 1; j < particles.length; j++) {
           var q = particles[j];
           var dx = p.x - q.x, dy = p.y - q.y;
-          var d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 130) {
+          var d2 = dx * dx + dy * dy;
+          if (d2 < 16900) {
+            var d = Math.sqrt(d2);
             ctx.strokeStyle = "rgba(" + lineRGB + ", " + (1 - d / 130) * 0.35 + ")";
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -468,10 +505,14 @@
     });
   });
 
-  window.addEventListener("resize", resize);
   window.addEventListener("load", resize);
 
+  var resizeT;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(resize, 150);
+  });
   resize();
-  draw();
+  startDraw();
 })();
 </script>

@@ -136,7 +136,7 @@ ul.b li::before { content: ""; position: absolute; left: 0; top: 0.42em; width: 
 
 /* 14 sources */
 .src { list-style: none; display: grid; gap: 20px; counter-reset: s; }
-.src li { counter-increment: s; font-size: 32px; line-height: 1.3; display: flex; gap: 26px; align-items: baseline; }
+.src li { counter-increment: s; font-size: 34px; line-height: 1.3; display: flex; gap: 26px; align-items: baseline; }
 .src li::before { content: counter(s); flex: 0 0 52px; height: 52px; border-radius: 14px; background: var(--grad); color: #fff; font: 700 28px "Space Grotesk"; display: flex; align-items: center; justify-content: center; }
 .src em { color: var(--muted); font-style: normal; }
 .tag { font: 600 22px "Inter"; text-transform: uppercase; letter-spacing: .1em; color: var(--cyan); border: 2px solid rgba(34,211,238,.45); padding: 2px 12px; border-radius: 999px; white-space: nowrap; }
@@ -146,17 +146,18 @@ html, body { height: 100%; overflow: hidden; background: #05070f; }
 body { user-select: none; }
 #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
 #deck { position: relative; width: 1920px; height: 1080px; flex: none; transform: scale(var(--s, 0.5)); transform-origin: center center; box-shadow: 0 40px 120px rgba(0,0,0,.6); border-radius: 6px; overflow: hidden; background: var(--bg); }
-#deck .slide { position: absolute; inset: 0; page-break-after: auto; opacity: 0; visibility: hidden; transform: translateX(110px) scale(.97); filter: blur(10px);
-  transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), filter .8s ease, visibility 0s linear 1s; }
-#deck .slide.active { opacity: 1; visibility: visible; transform: none; filter: none; transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), filter .8s ease, visibility 0s; }
+#deck .slide { position: absolute; inset: 0; page-break-after: auto; opacity: 0; visibility: hidden; transform: translateX(110px) scale(.97);
+  transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), visibility 0s linear 1s; }
+#deck .slide.active { opacity: 1; visibility: visible; transform: none; transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+#deck .slide:not(.active) * { animation-play-state: paused !important; }
 #deck .slide.left { transform: translateX(-110px) scale(.97); }
 
 /* staggered entrance */
 .a { opacity: 0; }
 .slide.active .a { animation: aIn .95s cubic-bezier(.2,.9,.25,1.15) var(--d, 0s) both; }
-@keyframes aIn { from { opacity: 0; transform: translateY(46px) scale(.96); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes aIn { from { opacity: 0; transform: translateY(46px) scale(.96); } to { opacity: 1; transform: none; } }
 .slide.active h2.a, .slide.active h1.a { animation-name: hIn; }
-@keyframes hIn { from { opacity: 0; transform: translateX(-60px); filter: blur(12px); letter-spacing: .05em; } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes hIn { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
 
 /* circuit flow */
 .slide.active .circuit path { stroke-dasharray: 14 12; animation: flowDash 2.4s linear infinite; }
@@ -226,7 +227,7 @@ body { user-select: none; }
 .ui { position: fixed; z-index: 50; transition: opacity .4s ease, transform .4s ease; }
 body.idle .ui.hide-idle { opacity: 0; pointer-events: none; }
 #topbar { top: 18px; right: 18px; display: flex; gap: 10px; }
-.ubtn { width: 52px; height: 52px; border-radius: 16px; border: 1px solid rgba(255,255,255,.16); background: rgba(15,21,48,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease; text-decoration: none; }
+.ubtn { width: 52px; height: 52px; border-radius: 16px; border: 1px solid rgba(255,255,255,.16); background: rgba(15,21,48,.72); color: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease; text-decoration: none; }
 .ubtn:hover { transform: translateY(-2px) scale(1.06); background: rgba(124,58,237,.35); border-color: rgba(167,139,250,.8); box-shadow: 0 0 24px rgba(124,58,237,.5); color: #fff; }
 .ubtn.close:hover { background: rgba(244,63,94,.35); border-color: rgba(251,113,133,.8); box-shadow: 0 0 24px rgba(244,63,94,.45); }
 .nav { top: 50%; width: 60px; height: 60px; margin-top: -30px; border-radius: 50%; }
@@ -463,8 +464,9 @@ kbd { font: 600 13px "Inter"; padding: 2px 7px; border-radius: 6px; border: 1px 
   <h2>Who chooses the <span class="g">next process?</span></h2>
   <div class="os2">
     <div class="card"><div class="logo"><i class="fab fa-linux"></i></div><h3>Linux</h3><p>CFS → <span class="hl">EEVDF</span><br><span>since Linux 6.6 (2023)</span><br>Goal: a fair share of CPU time</p></div>
-    <div class="card"><div class="logo"><i class="fab fa-windows"></i></div><h3>Windows</h3><p>Priority-based<br><span>32 priority levels</span><br>Goal: important threads first</p></div>
+    <div class="card"><div class="logo"><i class="fab fa-windows"></i></div><h3>Windows</h3><p>Priority-based<br><span>one queue per priority level</span><br>Goal: important threads first</p></div>
   </div>
+  <div class="note"><i class="fas fa-book"></i> &nbsp;Linux kernel docs (CFS, EEVDF) · Microsoft Learn, “Context Switches”</div>
   <div class="num">9</div>
 </section>
 
@@ -558,6 +560,7 @@ kbd { font: 600 13px "Inter"; padding: 2px 7px; border-radius: 6px; border: 1px 
       <li>Nonvoluntary: the OS stops it</li>
     </ul>
   </div>
+  <div class="foot">Linux man-pages: vmstat(8), proc_pid_status(5)</div>
   <div class="num">12</div>
 </section>
 
@@ -587,6 +590,7 @@ kbd { font: 600 13px "Inter"; padding: 2px 7px; border-radius: 6px; border: 1px 
     <div class="card tile" style="padding:34px 36px"><div class="ic" style="flex-basis:90px;height:90px;font-size:42px"><i class="fas fa-repeat"></i></div><div><b style="font-size:40px">Loop</b><span>runs until Ctrl + C</span></div></div>
     <div class="card tile" style="padding:34px 36px"><div class="ic" style="flex-basis:90px;height:90px;font-size:42px"><i class="fas fa-chart-line"></i></div><div><b style="font-size:40px">Thousands</b><span>even on an idle PC</span></div></div>
   </div>
+  <div class="foot" style="bottom:20px">Microsoft Learn: Win32_PerfFormattedData classes</div>
   <div class="num">13</div>
 </section>
 
@@ -619,16 +623,15 @@ kbd { font: 600 13px "Inter"; padding: 2px 7px; border-radius: 6px; border: 1px 
 <g fill="#0b1020" stroke-width="3"><circle cx="340" cy="80" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="390" cy="160" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="470" cy="190" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="500" cy="290" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="580" cy="100" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="380" cy="70" r="7" stroke="rgba(139,92,246,.7)"/><circle cx="560" cy="340" r="7" stroke="rgba(34,211,238,.7)"/><circle cx="300" cy="60" r="7" stroke="rgba(34,211,238,.7)"/></g>
 </svg>
   <h2 style="margin-bottom:44px">Sources</h2>
-  <ol class="src">
+  <ol class="src" style="gap:26px">
     <li><span>Ousterhout, J. (1990). <em>Why Aren't Operating Systems Getting Faster As Fast as Hardware?</em> USENIX</span><span class="tag">Paper</span></li>
     <li><span>Li, C., Ding, C. &amp; Shen, K. (2007). <em>Quantifying the Cost of Context Switch.</em> ACM ExpCS</span><span class="tag">Paper</span></li>
     <li><span>Arpaci-Dusseau, R. &amp; A. <em>Operating Systems: Three Easy Pieces</em>, Ch. 6: Limited Direct Execution</span><span class="tag">Book</span></li>
     <li><span>Microsoft Learn. <em>Context Switches</em> — learn.microsoft.com</span><span class="tag">Tech doc</span></li>
     <li><span>Linux Kernel Documentation. <em>CFS Scheduler</em> &amp; <em>EEVDF Scheduler</em> — docs.kernel.org</span><span class="tag">Tech doc</span></li>
+    <li><span>Linux man-pages. <em>vmstat(8)</em> &amp; <em>proc_pid_status(5)</em> — man7.org</span><span class="tag">Tech doc</span></li>
+    <li><span>Microsoft Learn. <em>Win32_PerfFormattedData classes</em> — learn.microsoft.com</span><span class="tag">Tech doc</span></li>
     <li><span>Bendersky, E. (2018). <em>Measuring context switching and memory overheads for Linux threads</em></span><span class="tag">Blog</span></li>
-    <li><span>Sigoure, B. “tsuna” (2010). <em>How long does it take to make a context switch?</em></span><span class="tag">Blog</span></li>
-    <li><span>gz/contextswitch — <em>github.com/gz/contextswitch</em></span><span class="tag">Code</span></li>
-    <li><span>GeeksforGeeks. <em>Context Switch in Operating System</em></span><span class="tag">Tutorial</span></li>
   </ol>
   <div class="num">15</div>
 </section>

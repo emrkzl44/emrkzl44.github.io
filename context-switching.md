@@ -21,7 +21,7 @@ In this talk I explain three things:
 <div class="deck-cards">
   <a class="deck-card" href="{{ '/slides/context-switching/' | relative_url }}">
     <div class="deck-card__media">
-      <img src="{{ '/assets/slides/cs-animated.png' | relative_url }}" alt="First slide of the animated presentation" loading="lazy">
+      <img src="{{ '/assets/slides/cs-animated.webp' | relative_url }}" width="960" height="540" alt="First slide of the animated presentation" loading="lazy">
       <span class="deck-card__play"><i class="fas fa-play"></i></span>
       <span class="deck-card__badge"><i class="fas fa-wand-magic-sparkles"></i> Animated</span>
     </div>
@@ -32,13 +32,13 @@ In this talk I explain three things:
   </a>
   <a class="deck-card" href="{{ '/assets/slides/context-switching.pdf' | relative_url }}" target="_blank" rel="noopener">
     <div class="deck-card__media">
-      <img src="{{ '/assets/slides/cs-pdf.png' | relative_url }}" alt="A slide from the PDF version" loading="lazy">
+      <img src="{{ '/assets/slides/cs-pdf.webp' | relative_url }}" width="960" height="540" alt="A slide from the PDF version" loading="lazy">
       <span class="deck-card__play"><i class="fas fa-file-pdf"></i></span>
       <span class="deck-card__badge"><i class="fas fa-file-pdf"></i> PDF</span>
     </div>
     <div class="deck-card__body">
       <strong>PDF slides</strong>
-      <span>15 slides · opens in a new tab</span>
+      <span>15 slides · 0.45 MB · opens in a new tab</span>
     </div>
   </a>
 </div>
@@ -51,8 +51,7 @@ In this talk I explain three things:
   <li><span class="src-tag">Book</span><a href="https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf" target="_blank" rel="noopener">Arpaci-Dusseau, R. &amp; Arpaci-Dusseau, A. Operating Systems: Three Easy Pieces, Chapter 6: Limited Direct Execution.</a></li>
   <li><span class="src-tag">Tech doc</span><a href="https://learn.microsoft.com/en-us/windows/win32/procthread/context-switches" target="_blank" rel="noopener">Microsoft Learn. Context Switches.</a></li>
   <li><span class="src-tag">Tech doc</span><a href="https://docs.kernel.org/scheduler/sched-design-CFS.html" target="_blank" rel="noopener">Linux Kernel Documentation. CFS Scheduler</a> &amp; <a href="https://docs.kernel.org/scheduler/sched-eevdf.html" target="_blank" rel="noopener">EEVDF Scheduler.</a></li>
+  <li><span class="src-tag">Tech doc</span><a href="https://man7.org/linux/man-pages/man8/vmstat.8.html" target="_blank" rel="noopener">Linux man-pages. vmstat(8)</a> &amp; <a href="https://man7.org/linux/man-pages/man5/proc_pid_status.5.html" target="_blank" rel="noopener">proc_pid_status(5).</a></li>
+  <li><span class="src-tag">Tech doc</span><a href="https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-perfformatteddata" target="_blank" rel="noopener">Microsoft Learn. Win32_PerfFormattedData classes.</a></li>
   <li><span class="src-tag">Blog</span><a href="https://eli.thegreenplace.net/2018/measuring-context-switching-and-memory-overheads-for-linux-threads/" target="_blank" rel="noopener">Bendersky, E. (2018). Measuring context switching and memory overheads for Linux threads.</a></li>
-  <li><span class="src-tag">Blog</span><a href="https://blog.tsunanet.net/2010/11/how-long-does-it-take-to-make-context.html" target="_blank" rel="noopener">Sigoure, B. "tsuna" (2010). How long does it take to make a context switch?</a></li>
-  <li><span class="src-tag">Code</span><a href="https://github.com/gz/contextswitch" target="_blank" rel="noopener">gz/contextswitch: a small program that measures context switch time (GitHub).</a></li>
-  <li><span class="src-tag">Tutorial</span><a href="https://www.geeksforgeeks.org/operating-systems/context-switch-in-operating-system/" target="_blank" rel="noopener">GeeksforGeeks. Context Switch in Operating System.</a></li>
 </ol>
