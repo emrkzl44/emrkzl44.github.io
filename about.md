@@ -24,14 +24,15 @@ Hello, I am Emre Kuzal. I am 21 years old and I am from Mersin. I am a third-yea
 ## Skills
 
 <div class="skill-badges">
-  <span><i class="fab fa-html5"></i> HTML</span>
-  <span><i class="fab fa-css3-alt"></i> CSS</span>
-  <span><i class="fab fa-js"></i> JavaScript</span>
-  <span><i class="fas fa-mobile-screen-button"></i> Flutter &amp; Dart</span>
+  <span><i class="fas fa-c"></i> C</span>
+  <span><i class="fab fa-java"></i> Java</span>
+  <span><i class="fab fa-python"></i> Python</span>
   <span><i class="fas fa-database"></i> SQL</span>
   <span><i class="fab fa-git-alt"></i> Git</span>
   <span><i class="fab fa-github"></i> GitHub</span>
   <span><i class="fas fa-microchip"></i> Operating Systems</span>
+  <span><i class="fas fa-server"></i> Systems</span>
+  <span><i class="fas fa-network-wired"></i> Networking</span>
 </div>
 
 <div class="contact-box">
