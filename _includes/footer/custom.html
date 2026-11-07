@@ -68,6 +68,28 @@
     });
   }
 
+  /* ================= E-MAIL LINKS ================= */
+  /* mailto: does nothing on computers without a mail app, so copy the address
+     and open a Gmail draft instead */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="mailto:"]') : null;
+    if (!a) return;
+    e.preventDefault();
+    var addr = a.getAttribute("href").replace("mailto:", "").split("?")[0];
+    try { if (navigator.clipboard) navigator.clipboard.writeText(addr).catch(function () {}); } catch (err) {}
+    var t = document.querySelector(".mail-toast");
+    if (!t) {
+      t = document.createElement("div");
+      t.className = "mail-toast";
+      body.appendChild(t);
+    }
+    t.innerHTML = '<i class="fas fa-check"></i> ' + addr + " copied";
+    t.classList.add("is-on");
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove("is-on"); }, 2600);
+    window.open("https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(addr), "_blank", "noopener");
+  });
+
   /* ================= NAVBAR ================= */
   var here = window.location.pathname.replace(/\/$/, "");
   document.querySelectorAll(".greedy-nav .visible-links a").forEach(function (a) {

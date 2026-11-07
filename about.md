@@ -16,9 +16,9 @@ Hello, I am Emre Kuzal. I am 21 years old and I am from Mersin. I am a third-yea
 ## My hobbies
 
 <div class="hobby-list">
-  <div class="hobby"><i class="fas fa-gamepad"></i><p>I like playing computer games.</p></div>
-  <div class="hobby"><i class="fas fa-film"></i><p>I like watching TV series and films.</p></div>
-  <div class="hobby"><i class="fas fa-rocket"></i><p>I like following new things in the IT sector and trying them.</p></div>
+  <div class="hobby"><i class="fas fa-headset"></i><p>I like playing computer games.</p></div>
+  <div class="hobby"><i class="fas fa-tv"></i><p>I like watching TV series and films.</p></div>
+  <div class="hobby"><i class="fas fa-laptop-code"></i><p>I like following new things in the IT sector and trying them.</p></div>
 </div>
 
 ## Skills
@@ -39,7 +39,7 @@ Hello, I am Emre Kuzal. I am 21 years old and I am from Mersin. I am a third-yea
   <h2>Contact me</h2>
   <p>Do you want to talk about a project or an idea? Send me a message.</p>
   <div class="contact-links">
-    <a class="btn btn--primary" href="mailto:emre33kuzal@gmail.com"><i class="fas fa-envelope"></i> E-mail</a>
+    <a class="btn contact-ghost" href="mailto:emre33kuzal@gmail.com"><i class="fas fa-envelope"></i> E-mail</a>
     <a class="btn contact-ghost" href="https://www.linkedin.com/in/emre-kuzal-73b90932b" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i> LinkedIn</a>
     <a class="btn contact-ghost" href="https://github.com/emrkzl44" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
   </div>
